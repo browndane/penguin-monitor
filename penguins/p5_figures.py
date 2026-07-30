@@ -114,7 +114,7 @@ def fig_cost_quality():
                "SAM 3 raw\n(no review)",
                "SAM 3 + sieve\n+ 5 s review"]
     hours = [206.7, 53.3, 0.05, 10.0]   # 0 h plotted at 0.05 for the log axis
-    iou = [1.00, 0.87, 0.83, 0.83]
+    iou = [1.00, 0.85, 0.83, 0.83]
     proposed = [False, False, False, True]
 
     fig, ax = plt.subplots(figsize=(3.4, 2.6))
