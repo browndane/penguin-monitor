@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zero-shot penguin instance segmentation &mdash; Brown and Bradshaw</title>
+<meta name="description" content="Zero-shot penguin instance segmentation at colony scale: code, evaluation protocol and results.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>Zero-Shot Penguin Instance Segmentation at Colony Scale: Foundation Models, Crowd-Sourced Agreement, and Expert-Time Reduction in Conservation Informatics</h1>
+<p class="authors">Dane Brown, Karen Bradshaw</p>
+<p class="affil">Department of Computer Science, Rhodes University</p>
+<p class="status">Under review. Code and evaluation protocol are released here: <a href="https://github.com/browndane/penguin-monitor">github.com/browndane/penguin-monitor</a></p>
+<h2>Abstract</h2>
+<p>The International Union for Conservation of Nature moved the African Penguin (<em>Spheniscus demersus</em>) to Critically Endangered in 2024. The South African breeding population has fallen by 77.8% over three generations. In March 2025 the High Court of South Africa endorsed ten-year no-take fishing closures around six breeding colonies, on the explicit condition that the conservation outcome be measured across the full decade. Automated monitoring of breeding colonies is therefore a regulatory necessity, not a research convenience.</p>
+<p>Two barriers block deployment of computer vision here. The first is annotation cost. Pixel-accurate instance masks for dense colony imagery need seabird-trained ecologists. Their time costs roughly ten times more than generic crowd-workers, and that small pool cannot scale to the millions of frames arriving from camera traps and tourist photographs. The second is evaluation. Aggregate metrics on penguin benchmarks average away the failures that matter most, and the dense, occluded, far-field scenes where those failures occur are exactly what real surveillance data contains. This study answers both barriers with a zero-shot pipeline. A text-prompted foundation segmentation model runs once per image from the single concept prompt “a penguin.” A sanity sieve then filters the output by area, edge, and dimension-fraction. An optional agreement filter reuses the dot annotations left by Penguin-Watch citizen scientists.</p>
+<p>The evaluation spans four test corpora, namely Penguin-Watch Gentoo time-lapse, web-scraped <em>Spheniscus</em> imagery from iNaturalist and Open Images V7, adversarial African-penguin captures from SANParks at Bird Island Colony in Algoa Bay and at Stony Point, and Boulders Beach video. Gold-standard masks for SANParks and Boulders Beach were re-annotated to a corrected v2 standard, so those two corpora carry the headline findings. Penguin-Watch and the web-scraped set retain the original v1 masks and are reported at lower confidence. Boulders Beach sits close to the supervised training distribution, and there the best supervised configuration reaches 75.2% aggregate mask mean average precision at overlap 0.5 against 69.0% for the zero-shot foundation model with a geometric sanity sieve. That gap is supervised home advantage, not zero-shot failure. SANParks is the opposite case. Its camera-trap captures carry dirty lenses and tussock occlusion, and every supervised model collapses on them, one as far as 2.8%. The zero-shot foundation model with sieve holds at 38.7%, a margin of 12.7% over the best supervised aggregate. The sieve removes 5 to 8% of false-positive masks on the v2 gold corpora without costing recall. On the Penguin-Watch subset a crowd-sourced agreement filter removes 71% of the false positives that remain, measured against v1 gold and not yet re-validated on v2. No curated training mask enters the zero-shot path at any point. End to end the pipeline yields a curated instance-segmentation dataset at roughly 5% of the expert-time cost of manual delineation. The pipeline, the FiftyOne testbed, and the difficulty-stratified evaluation protocol are released to seed future ecological-informatics benchmarks.</p>
+<p class="keywords">Penguin monitoring &middot; <em>Spheniscus demersus</em> &middot; Foundation models &middot; SAM 3 &middot; Zero-shot segmentation &middot; Crowd-sourced labels &middot; Ecological informatics &middot; Citizen science &middot; Density estimation</p>
+<h2>Headline result</h2>
+<p>Aggregate mask mean average precision at overlap 0.5, on the two corpora re-annotated to the corrected gold standard. The supervised column is the best of six trained configurations. Close to the training distribution the supervised models lead; on adversarial camera-trap imagery they collapse and the zero-shot pipeline does not.</p>
+<table><thead><tr><th>Corpus</th><th class="num">Best supervised</th><th class="num">Zero-shot with sieve</th></tr></thead><tbody>
+<tr><td>Boulders Beach, close to the supervised training distribution</td><td class="num"><strong>75.2</strong></td><td class="num">69.0</td></tr>
+<tr><td>SANParks Algoa, camera-trap captures with occlusion and dirty lenses</td><td class="num"><strong>38.7</strong></td><td class="num">26.0</td></tr>
+</tbody></table>
+<h2>Figures</h2>
+<figure><img src="figures/fig1_cost_quality.png" alt="Annotation effort against mask quality for a 1000-image set."><figcaption>Annotation effort against mask quality for a 1000-image set. The pipeline reaches 0.83 mask IoU for about ten hours of expert time, against 206.7 hours for manual polygon delineation.</figcaption></figure>
+<figure><img src="figures/fig2_count_mae.png" alt="Count error by method on the two gold corpora, in birds per "><figcaption>Count error by method on the two gold corpora, in birds per image, at a score threshold of 0.5 fixed for every method. Lower is better.</figcaption></figure>
+<figure><img src="figures/fig3_count_density.png" alt="Signed count error against the number of birds present. Ever"><figcaption>Signed count error against the number of birds present. Every model over-counts sparse images and under-counts dense ones.</figcaption></figure>
+<h2>Code</h2>
+<p>The repository holds the benchmark orchestrator, the per-framework training wrappers for the seven supervised baselines, the sanity sieve, the difficulty-stratified evaluation protocol and every script that produces a number in the paper. The README maps each table and figure to the script and artefact behind it.</p>
+<pre>git clone https://github.com/browndane/penguin-monitor.git
+cd penguin-monitor
+python bench_any.py --list_models</pre>
+<h2>Citation</h2>
+<pre>@article{brown_penguin_monitor,
+  title   = {Zero-Shot Penguin Instance Segmentation at Colony Scale: Foundation Models, Crowd-Sourced Agreement, and Expert-Time Reduction in Conservation Informatics},
+  author  = {Dane Brown and Karen Bradshaw},
+  year    = {2026},
+  note    = {Under review},
+  url     = {https://github.com/browndane/penguin-monitor}
+}</pre>
+<footer>Department of Computer Science, Rhodes University. Site source in <a href="https://github.com/browndane/penguin-monitor/tree/main/docs">docs/</a>.</footer>
+</main>
+</body>
+</html>

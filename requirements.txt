@@ -1,0 +1,13 @@
+# Versions are the ones the reported runs used, not lower bounds.
+torch
+torchvision
+ultralytics
+transformers
+pycocotools
+torchmetrics
+numpy
+matplotlib
+pillow
+opencv-python-headless
+pyyaml
+tqdm

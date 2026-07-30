@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: If you use this software, please cite the paper below.
+authors:
+  - family-names: Brown
+    given-names: Dane
+  - family-names: Bradshaw
+    given-names: Karen
+title: Zero-Shot Penguin Instance Segmentation at Colony Scale: Foundation Models, Crowd-Sourced Agreement, and Expert-Time Reduction in Conservation Informatics
+year: 2026
+url: https://github.com/browndane/penguin-monitor
