@@ -1,8 +1,8 @@
-# Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks: code
+# Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks
 
 Code and evaluation protocol for *Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks*, by Dane Brown and Karen Bradshaw, Department of Computer Science, Rhodes University. Submitted to Ecological Informatics.
 
-## What this is
+## About
 
 A geometric sieve and a citizen-science agreement filter that turn the raw masks of a
 text-prompted foundation model into penguin instance masks and counts, with the
@@ -43,7 +43,7 @@ into the aggregated report. Two invariants matter if you modify the evaluation:
 100 when it summarises and silently returns -1 otherwise; and every wrapper must
 set the multiprocessing start method to `spawn` before importing torch.
 
-## What produces which number
+## Paper results and their scripts
 
 | Paper object | Script | Artefact |
 |---|---|---|
@@ -67,7 +67,7 @@ averaged over the two corrected gold corpora. That protocol cannot be gamed by
 predicting fewer and safer masks. Under it the sieve does not raise mask
 fidelity, and the paper says so.
 
-## Machine-specific paths
+## Running on another machine
 
 This is research code that ran on one machine. `PATHS.md` lists every absolute
 path still in the source, with file and line. The two a reader hits first are

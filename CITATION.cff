@@ -1,10 +1,16 @@
 cff-version: 1.2.0
-message: If you use this software, please cite the paper below.
+message: If you use this code or data, please cite it as below.
+type: software
+title: "Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks"
+version: 1.0.0
+date-released: 2026-10-28
+license: MIT
 authors:
   - family-names: Brown
     given-names: Dane
+    affiliation: Department of Computer Science, Rhodes University
   - family-names: Bradshaw
     given-names: Karen
-title: "Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks"
-year: 2026
-url: https://github.com/browndane/penguin-monitor
+    affiliation: Department of Computer Science, Rhodes University
+repository-code: https://github.com/browndane/penguin-monitor
+url: https://browndane.github.io/penguin-monitor/

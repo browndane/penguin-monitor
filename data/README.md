@@ -107,7 +107,7 @@ Pairings:
 ## Not included
 
 - SANParks labels, tiers, predictions and scores (permit).
-- Penguin Watch and iNaturalist images, which are public at their sources.
+- 206 of the 856 iNaturalist test photographs, listed with links in `inaturalist/images_not_included.csv`.
 - Large prediction files whose scores are already in a shipped score file: iNaturalist RF-DETR-seg predictions and their SAM 2 versions, the RT-DETR-v4 iNaturalist SAM 2 predictions, the Boulders RF-DETR-seg SAM 2 control predictions and the YOLO corpus-diversity predictions.
 - The iNaturalist DINOv3-M2F-ViT-H/16+ own-mask predictions, removed by an automated string screen. Its Table S3 row is backed by `all_results.json` and `results.csv`.
 - Per-image score arrays for soft-average prompt fusion, so that row of Table S5 cannot be re-scored here.
