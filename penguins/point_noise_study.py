@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Point-noise sanity study: what crowd-annotator sloppiness costs SAM 2.
 
 WHY
@@ -84,7 +85,7 @@ MERGE_RADIUS = 60          # clicks within this distance = same penguin
 MAX_MASK_FRACTION = 0.12   # reject masks covering > 12% of image
 MIN_MASK_AREA = 384        # reject tiny fragment masks
 
-SAM2_ROOT = "/home/vorse/sam2"
+SAM2_ROOT = "/home/user/sam2"
 SAM2_CONFIGS_ROOT = f"{SAM2_ROOT}/sam2/configs"
 SAM2_CKPT = os.environ.get(
     "SAM2_CKPT", f"{SAM2_ROOT}/checkpoints/sam2.1_hiera_large.pt")

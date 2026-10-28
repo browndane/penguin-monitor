@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Per-tier mask mAP@0.5 re-eval via pycocotools COCOeval with correct ignore semantics.
 
 Metric: COCO-style mask mAP at single IoU 0.5 (paper: mAP_{50}^{mask} at overlap 0.5).

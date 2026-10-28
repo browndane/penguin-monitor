@@ -5,6 +5,6 @@ authors:
     given-names: Dane
   - family-names: Bradshaw
     given-names: Karen
-title: Zero-Shot Penguin Instance Segmentation at Colony Scale: Foundation Models, Crowd-Sourced Agreement, and Expert-Time Reduction in Conservation Informatics
+title: "Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks"
 year: 2026
 url: https://github.com/browndane/penguin-monitor

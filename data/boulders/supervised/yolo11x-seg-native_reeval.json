@@ -1,0 +1,18 @@
+{
+ "ckpt_tag": "yolo11x-seg-native",
+ "corpus": "boulders",
+ "easy": 97.59687411243696,
+ "medium": 75.32138113126535,
+ "hard": 13.689736620720897,
+ "agg": 62.20266395480775,
+ "agg_iw": 78.82625919738067,
+ "n_gt_per_tier": {
+  "easy": 204,
+  "medium": 535,
+  "hard": 30
+ },
+ "tiers_file": "/home/user/bench_any/runs/p5_r1_v2/boulders/boulders_tiers.json",
+ "recall": 0.8635,
+ "paper_in_dist_mAP50": 0.9,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of the tiers that carry gold instances"
+}

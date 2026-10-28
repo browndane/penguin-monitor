@@ -1,19 +1,33 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # USAGE (Train): python3 yolo_any_tune.py --data /path/to/dataset --epochs 100 --batch_sz 8 --model yolov8l-seg.pt
 # USAGE (Resume): python3 yolo_any_tune.py --data /path/to/dataset --resume
 # USAGE (Tune & Train): python3 yolo_any_tune.py --data /path/to/dataset --tune --tune_iter 10 --epochs 20
-# USAGE (Advanced): python3 yolo_any_tune.py --data /mnt/LinuxBackup/FoundationDatasets/oiv7-yolo-allfindrefine-penguin --patience 20 --batch_sz 8 --tune --tune_iter 1 --epochs 11 --model /home/vorse/yolo_general/models/penguin/yolo11x-seg_penguin.pt --nbs 8
+# USAGE (Advanced): python3 yolo_any_tune.py --data /mnt/LinuxBackup/FoundationDatasets/oiv7-yolo-allfindrefine-penguin --patience 20 --batch_sz 8 --tune --tune_iter 1 --epochs 11 --model /home/user/yolo_general/models/penguin/yolo11x-seg_penguin.pt --nbs 8
 
 import numpy as np, os, yaml, logging, argparse, gc, sys, shutil, atexit, tempfile, cv2, random, hashlib
 import albumentations as A
 from ultralytics import YOLO
+# ultralytics.utils.nms picks its NMS backend with `"torchvision" in sys.modules`
+# (nms.py:96). Nothing in this wrapper's import chain pulls torchvision in, so the
+# check fails and NMS falls back to TorchNMS.nms -- a pure-torch loop with no time
+# guard inside a single image. On the yolo26x-seg corpus-diversity run the final
+# .val() warmup fed a zeros image through the end2end head, every anchor cleared the
+# confidence gate, and that loop ran for over three hours at 0 % GPU. Importing
+# torchvision here flips the check and uses its CUDA kernel; upstream documents the
+# two paths as matching exactly, so no metric changes.
+import torchvision  # noqa: F401
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from bench_schema import zero_metrics
 
-import ray
-from ray import tune
-from ray.tune.search.optuna import OptunaSearch
+# Ray is only reachable on the --tune path, so it is imported there. A top-level
+# import kills every plain training run in a venv without a ray wheel.
+def _load_ray():
+    global ray, tune, OptunaSearch
+    import ray
+    from ray import tune
+    from ray.tune.search.optuna import OptunaSearch
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -290,6 +304,10 @@ if __name__ == "__main__":
     ap.add_argument("--tune_iter", default=5, type=int)
     ap.add_argument("--tune_aug", action='store_true')
     ap.add_argument("--inference_only", action='store_true')
+    # Inference-only normally loads last.pt (resume semantics); --eval_best
+    # forces best.pt instead so a best-vs-last comparison can score the best
+    # epoch without a retrain (closes R.3b/C.1: no bestckpt eval path existed).
+    ap.add_argument("--eval_best", action='store_true')
     ap.add_argument("--plot_gt", action='store_true')
     # --- v2 bench_eval hooks ------------------------------------------------
     # Opt-in SAM2-prompted segmentation for detection-only YOLO variants so
@@ -345,6 +363,7 @@ if __name__ == "__main__":
 
     # Hyperparameter tuning
     if args.tune:
+        _load_ray()
         def train_objective(tune_config):
             model_tune = YOLO(args.model)
             model_tune.train(
@@ -417,9 +436,14 @@ if __name__ == "__main__":
                 # has no last.pt yet. Don't abort (that made yolo entries exit
                 # instantly with rc=1 so the next model looked like it "ran
                 # first"); just start training from the pretrained weights.
-                print("ℹ️ Resume requested but no checkpoint yet; starting a fresh run.")
+                print("ℹ Resume requested but no checkpoint yet; starting a fresh run.")
 
         model = YOLO(model_path_to_use)
+
+        # `--threads 0` means auto, not "no workers": chains pass 0 for RF-DETR's
+        # loky deadlock, but Ultralytics handles a real worker count. -1 forces
+        # single-process. cvBench speed port.
+        WORKERS = 0 if args.threads < 0 else (args.threads or min(8, os.cpu_count() or 8))
 
         # Bench: log per-epoch mAP75 (and mAP50_95) to a sidecar so the paper
         # figures show full IoU breakdown per-epoch, not just the final point.
@@ -434,7 +458,7 @@ if __name__ == "__main__":
             data=ACTIVE_DATA_YAML, project=os.path.join(ACTIVE_ROOT_DIR, 'runs', TASK),
             name=RUN_NAME, exist_ok=True, task=TASK, optimizer=args.opti,
             imgsz=args.imgsz, epochs=args.epochs, patience=args.patience,
-            batch=BATCH_SIZE, lr0=args.lr, lrf=args.lrf, workers=args.threads, nbs=args.nbs,
+            batch=BATCH_SIZE, lr0=args.lr, lrf=args.lrf, workers=WORKERS, nbs=args.nbs,
             cos_lr=args.cos_lr, close_mosaic=min(10, args.epochs // 30),
             dropout=args.dropout, weight_decay=args.weight_decay, momentum=args.momentum,
             warmup_momentum=args.warmup_momentum,
@@ -456,7 +480,9 @@ if __name__ == "__main__":
     else:
         # inference-only: load trained checkpoint from the run dir
         weights_dir = Path.home() / 'bench_any' / 'runs' / TASK / RUN_NAME / 'weights'
-        ckpt_path = weights_dir / 'last.pt'
+        # --eval_best: score the best epoch (best.pt). Default inference-only
+        # keeps last.pt (resume semantics). RT-DETR's best.pth is separate.
+        ckpt_path = weights_dir / 'best.pt' if args.eval_best else weights_dir / 'last.pt'
         if not ckpt_path.is_file():
             ckpt_path = weights_dir / 'best.pt'
         if ckpt_path.is_file():
@@ -480,11 +506,27 @@ if __name__ == "__main__":
         final_metrics = {}
         for split in ('val', 'test'):
             if split not in active_yaml_config: continue
+            # The val(173-img) and test(1016-img) passes run back-to-back on the
+            # same allocator; without an empty_cache() the test pass starts
+            # fragmented and the segment validator's scale_preds .byte() mask
+            # conversion peak-allocates ~2.6 GiB and OOMs on a 16 GB card.
+            # Bound the test-split mask accumulation with an explicit micro-batch.
+            try:
+                import torch as _torch_eval
+                _torch_eval.cuda.empty_cache()
+            except Exception:
+                pass
+            # Bound the mask-accumulation batch on BOTH dense splits: the test
+            # pass (1016-img) and the val pass (173-img) run back-to-back on the
+            # same fragmented allocator, and dense-val datasets (e.g. pw_smallsite_core)
+            # OOM in the segment validator's scale_preds .byte() path before the
+            # test pass even starts.
+            _eval_batch = 2 if split in ('val', 'test') else None
             print(f"\n🧪 Validating final model on '{split}' split...")
             # save_json=True makes Ultralytics emit predictions.json (COCO format)
             # under <project>/<name>/ — required by bench_eval.coco_eval_full so
             # we can compute S/M/L AP, AR_100, and mask→box cross-task box AP.
-            metrics = final_model.val(data=ACTIVE_DATA_YAML, split=split,
+            _val_kwargs = dict(data=ACTIVE_DATA_YAML, split=split,
                                       project=str(ACTIVE_ROOT_DIR), name=f"{split}_{RUN_NAME}",
                                       save=True, save_json=True, plots=False,
                                       visualize=args.visualize,
@@ -495,6 +537,9 @@ if __name__ == "__main__":
                                       # images aren't truncated (matches bench_eval.MAX_DETS).
                                       max_det=1000,
                                       show_conf=False, show_boxes=False, show_labels=False)
+            if _eval_batch is not None:
+                _val_kwargs['batch'] = _eval_batch
+            metrics = final_model.val(**_val_kwargs)
             print_detailed_metrics(metrics, CLASSES, TASK)
             if split == 'test':
                 b = metrics.box; s = getattr(metrics, 'seg', None)
@@ -644,7 +689,25 @@ if __name__ == "__main__":
                     final_metrics["batch_effective"] = max(int(args.nbs), int(BATCH_SIZE))
                 else:
                     final_metrics["batch_effective"] = int(args.nbs)
+                # Epochs actually trained, so a patience stop is visible in the
+                # aggregated CSV instead of reading as the configured budget.
+                final_metrics["patience"] = int(args.patience)
+                _side = primary_save_dir / 'mAP75_history.csv'
+                if _side.is_file():
+                    with open(_side, newline='') as _fh:
+                        _eps = [r.get('epoch') for r in __import__('csv').DictReader(_fh)]
+                    if _eps:
+                        # Ultralytics appends a final re-validation of the best
+                        # weights; the last training epoch is the row before it.
+                        final_metrics["epochs_trained"] = int(float(_eps[-1])) - 1
+
                 import csv as _csv
+                # Ultralytics wrote its per-epoch results.csv to the same name;
+                # keep it before the harvest lands on top, otherwise the run's
+                # only per-epoch trace is the mAP75 sidecar.
+                _ultra_csv = primary_save_dir / 'results.csv'
+                if _ultra_csv.is_file():
+                    shutil.copy2(_ultra_csv, primary_save_dir / 'results_ultra.csv')
                 with open(primary_save_dir / 'results.csv', 'w', newline='') as fh:
                     w = _csv.DictWriter(fh, fieldnames=list(final_metrics.keys()))
                     w.writeheader(); w.writerow(final_metrics)

@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Per-tier mask mAP@0.5 re-eval on p5_gold200 for the 3 evaluable rows.
 
 Per paper (L170-179, L263): mask mAP@0.5, single IoU 0.5.

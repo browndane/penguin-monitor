@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Count-accuracy analysis: predicted per-frame count vs ground-truth count.
 
 WHY
 ---
-The 4th paper's first realistic, ground-truthable result on the penguin demo
+Follow-up work's first realistic, ground-truthable result on the penguin demo
 is COUNT ACCURACY — does the detector+tracker report the right number of
 penguins per frame? This needs only per-frame GT COUNT (a human can count "2
 visible penguins" without naming them), NOT identity GT (which is circular
@@ -11,7 +12,7 @@ and slow). So this is the experiment that runs as soon as `gt_scaffold.py`
 output is hand-filled in the `gt_count` column.
 
 It also reports the tracker's over/under-count profile by difficulty — the
-exact signal the 4th paper's FAD gate would route on (frames where the count
+exact signal a frame-level gate would route on (frames where the count
 is wrong are hard frames).
 
 INPUT
@@ -151,7 +152,7 @@ def main():
           f"(easy={summary['n_easy']}, hard={summary['n_hard']})")
     print(f"  MAE on easy frames:          {summary['MAE_easy']}")
     print(f"  MAE on hard frames:          {summary['MAE_hard']}  "
-          f"<-- the cost-asymmetry the 4th paper's FAD gate would target")
+          f"<-- the cost-asymmetry a frame-level gate would target")
 
     if args.out:
         with open(args.out, "w") as f:

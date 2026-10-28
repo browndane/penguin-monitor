@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Union vs single-prompt sieve sweep on P5's REAL metric (tier-mean agg mAP@50).
 
 WHY
@@ -34,7 +35,7 @@ import numpy as np
 import pycocotools.mask as mu
 
 # Reuse the paper's exact eval method
-PREP_DIR = Path("/home/vorse/bench_any/datasets/prep")
+PREP_DIR = Path("/home/user/bench_any/datasets/prep")
 sys.path.insert(0, str(PREP_DIR))
 import prep_10_filebased as P10  # noqa: E402
 

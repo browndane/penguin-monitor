@@ -1,0 +1,11 @@
+{
+ "ckpt_tag": "rf-detr-seg-xlarge",
+ "corpus": "boulders",
+ "easy": 98.25099005696872,
+ "medium": 88.7634905594729,
+ "hard": 38.59655212764961,
+ "agg": 75.20367758136375,
+ "recall": 0.9571,
+ "paper_in_dist_mAP50": 0.932,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers"
+}

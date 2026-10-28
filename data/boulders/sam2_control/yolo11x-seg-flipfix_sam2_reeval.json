@@ -1,0 +1,18 @@
+{
+ "ckpt_tag": "yolo11x-seg_sam2",
+ "corpus": "boulders",
+ "easy": 98.19424861774681,
+ "medium": 85.74502231728923,
+ "hard": 28.17490293515812,
+ "agg": 70.70472462339805,
+ "agg_iw": 86.80163946141072,
+ "n_gt_per_tier": {
+  "easy": 204,
+  "medium": 535,
+  "hard": 30
+ },
+ "tiers_file": "",
+ "recall": 0.9311,
+ "paper_in_dist_mAP50": null,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of the tiers that carry gold instances"
+}

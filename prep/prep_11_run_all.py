@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Driver: run all 3 pred rows on p5_gold200 sequentially, log progress to /tmp.
 Run via: ~/cvML/bin/python prep_11_run_all.py  (background, no --row arg)
 Each row calls the matching row_* function from prep_11_generate_preds.py."""

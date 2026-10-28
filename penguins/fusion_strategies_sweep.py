@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Multi-strategy prompt-fusion sweep on P5's REAL metric (tier-mean mAP@50 + 0.5:0.95).
 
 WHY
@@ -34,7 +35,7 @@ import pycocotools.mask as mu
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-PREP_DIR = Path("/home/vorse/bench_any/datasets/prep")
+PREP_DIR = Path("/home/user/bench_any/datasets/prep")
 sys.path.insert(0, str(PREP_DIR))
 import prep_10_filebased as P10
 

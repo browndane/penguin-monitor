@@ -1,21 +1,22 @@
-"""Upload p5_gold200_roboflow export to two Roboflow projects under danesegmentation.
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
+"""Upload p5_gold200_roboflow export to two Roboflow projects under anonymous-workspace.
 
 SANParks frames (1_XXXXXXXX (n).jpg) -> sanparks-algoa
 Boulders frames (IMG_XXXX.jpg)       -> boulders-penguin
 
 Uses single_upload (returns a dict) so we capture image_id + duplicate/annotation status.
 Resumable: skips a basename if already in the manifest with an image id.
-Run with the danesegmentation key as ROBOFLOW_API_KEY.
+Run with the anonymous-workspace key as ROBOFLOW_API_KEY.
 """
 import os, json, time, roboflow
 from pathlib import Path
 
-IMG = Path("/home/vorse/bench_any/datasets/p5_gold200_roboflow/images")
-MANIFEST = Path("/home/vorse/bench_any/datasets/p5_gold200_roboflow/upload_manifest.json")
+IMG = Path("/home/user/bench_any/datasets/p5_gold200_roboflow/images")
+MANIFEST = Path("/home/user/bench_any/datasets/p5_gold200_roboflow/upload_manifest.json")
 done = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
 
 rf = roboflow.Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
-ws = rf.workspace("danesegmentation")
+ws = rf.workspace("anonymous-workspace")
 projects = {
     "sanparks": ws.project("sanparks-algoa"),
     "boulders": ws.project("boulders-penguin"),

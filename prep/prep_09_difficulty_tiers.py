@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Compute paper difficulty tiers (L170-179) for p5_gold200 GT -> SIDECAR JSON manifest.
 
 D_i = 0.40*S_i + 0.35*O_i + 0.25*D_i

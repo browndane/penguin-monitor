@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """SAM2 video mask propagation on RF-DETR detections (Step 5).
 
 Extends penguin_video_demo.py's RF-DETR + ByteTrack + counting pattern with
@@ -61,10 +62,10 @@ from penguin_video_demo import load_model, _make_tracker, _draw_overlay, _draw_h
 
 # SAM2 ckpt/config defaults mirror sam2_backfill_rfdetr.py L15-18 (env-overridable).
 SAM2_CKPT = os.environ.get(
-    "SAM2_CKPT", "/home/vorse/sam2/checkpoints/sam2.1_hiera_large.pt")
+    "SAM2_CKPT", "/home/user/sam2/checkpoints/sam2.1_hiera_large.pt")
 SAM2_CONFIG = os.environ.get(
-    "SAM2_CONFIG", "/home/vorse/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml")
-SAM2_CONFIGS_ROOT = "/home/vorse/sam2/sam2/configs"
+    "SAM2_CONFIG", "/home/user/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml")
+SAM2_CONFIGS_ROOT = "/home/user/sam2/sam2/configs"
 
 # A small fixed palette for per-instance mask colours (matches the demo's PALETTE
 # usage so the overlay looks consistent). 24 distinct colours.
@@ -134,7 +135,7 @@ def _build_sam2_video_predictor(sam2_cfg: str, sam2_ckpt: str, device: str):
     Returns the predictor (eval mode) or raises; caller guards with try/except.
     """
     # sam2_root must be on sys.path before importing sam2.* (mirrors bench_eval).
-    sam2_root = "/home/vorse/sam2"
+    sam2_root = "/home/user/sam2"
     if sam2_root not in sys.path:
         sys.path.insert(0, sam2_root)
     from hydra import initialize_config_dir
@@ -297,30 +298,79 @@ class SAM2VideoPropagator:
             dets = dets[keep]
         return dets
 
+    # RAM guards (2026-09-01 OOM fix). Every seeded SAM2 object carries per-frame
+    # CPU state for the WHOLE clip, so junk seeding is a memory bomb, not just
+    # noise: the old auto_conf took the MEDIAN of all ~300 RF-DETR query scores,
+    # which sits in the junk tail (0.01-0.03), seeded hundreds of garbage objects
+    # per clip, and ate 60+ GB RAM (rog near-crash, both overnight jobs killed).
+    MAX_SEEDS_PER_KEYFRAME = int(os.environ.get("SAM2PROP_MAX_SEEDS", 24))
+    MAX_SAM2_OBJECTS = int(os.environ.get("SAM2PROP_MAX_OBJECTS", 64))
+    NON_COND_MEM_KEEP = 32        # frames of non-cond SAM2 state retained per object (RAM guard)
+
+    # Third ablation arm (2026-09-04). Those two caps are the confound in the
+    # 2026-09-01 comparison: the SAM2 arm seeds a fixed top-24 while the baseline
+    # arm runs the detector uncapped, so the two arms never saw the same
+    # detections. Setting SAM2PROP_MAX_SEEDS=0 (unlimited per keyframe) and
+    # SAM2PROP_FIXED_CONF=1 (no auto-lowering) gives SAM2 the baseline's own
+    # seeds, which is the only way to attribute a count difference to
+    # propagation rather than to seeding. Both default off: unset env reproduces
+    # the shipped behaviour exactly. Raising these without the 40 GB scope
+    # re-arms the BUG 22 memory bomb, so MAX_SAM2_OBJECTS stays bounded.
+    FIXED_CONF = os.environ.get("SAM2PROP_FIXED_CONF") == "1"
+
+    def _cap_dets(self, dets):
+        """Keep only the top MAX_SEEDS_PER_KEYFRAME detections by confidence.
+
+        MAX_SEEDS_PER_KEYFRAME <= 0 disables the per-keyframe cap; the total
+        MAX_SAM2_OBJECTS ceiling still applies.
+        """
+        if self.MAX_SEEDS_PER_KEYFRAME <= 0:
+            return dets
+        conf = getattr(dets, "confidence", None)
+        n = len(getattr(dets, "xyxy", []))
+        if conf is None or n <= self.MAX_SEEDS_PER_KEYFRAME:
+            return dets
+        keep = np.argsort(np.asarray(conf))[::-1][:self.MAX_SEEDS_PER_KEYFRAME]
+        return dets[np.sort(keep)]
+
     def _calibrate_conf(self, frame_rgb):
         """Probe RF-DETR scores on one frame; if they sit well below ``self.conf``,
         lower ``self.conf`` so keyframe seeding actually finds objects. Returns the
         (possibly lowered) conf.
 
-        Probes at threshold=0.0 to see the raw score distribution, takes the median
-        of the non-trivial scores, and if that median is below ``self.conf`` adopts
-        it (floored at 0.005 so we don't collapse to pure noise). Never raises conf.
+        Probes at threshold=0.0 and lowers conf to the MAX_SEEDS_PER_KEYFRAME-th
+        ranked score, floored at 0.02 — admits at most a top-K of real objects
+        instead of the junk-median rule that caused the 2026-09-01 OOM (see the
+        RAM-guard comment above). Never raises conf.
+
+        SAM2PROP_FIXED_CONF=1 skips the probe entirely and keeps the requested
+        conf, so the SAM2 arm seeds at the same threshold the baseline arm
+        detects at. An unlimited MAX_SEEDS_PER_KEYFRAME also skips it: with no
+        top-K there is no K-th score to calibrate against, and the old
+        expression would have taken the LOWEST score, which is the junk-median
+        bomb of BUG 22 in a worse form.
         """
+        if self.FIXED_CONF or self.MAX_SEEDS_PER_KEYFRAME <= 0:
+            print(f"[sam2prop] auto_conf DISABLED "
+                  f"(fixed_conf={self.FIXED_CONF}, "
+                  f"max_seeds={self.MAX_SEEDS_PER_KEYFRAME}); "
+                  f"conf stays {self.conf:.3f}")
+            return self.conf
         dets = self._detect(frame_rgb, threshold=0.0)
         scores = getattr(dets, "confidence", None)
         scores = np.asarray(scores, dtype=float) if scores is not None else np.array([])
         scores = scores[scores > 0.0]
         if len(scores) == 0:
             return self.conf  # nothing detectable; the zero-prompt guard will report it
-        med = float(np.median(scores))
-        cand = max(0.005, med)  # don't collapse to pure noise
+        k = min(len(scores), self.MAX_SEEDS_PER_KEYFRAME)
+        cand = max(0.02, float(np.sort(scores)[-k]))
         if cand < self.conf:
-            print(f"[sam2prop] auto_conf: frame-0 score median={med:.4f} "
+            print(f"[sam2prop] auto_conf: frame-0 top-{k} score={cand:.4f} "
                   f"< requested conf={self.conf:.3f}; lowering conf -> {cand:.4f}")
             self.conf = cand
         else:
-            print(f"[sam2prop] auto_conf: frame-0 score median={med:.4f} >= conf={self.conf:.3f}; "
-                  f"no change")
+            print(f"[sam2prop] auto_conf: frame-0 top-{k} score={cand:.4f} >= "
+                  f"conf={self.conf:.3f}; no change")
         return self.conf
 
     @staticmethod
@@ -349,7 +399,8 @@ class SAM2VideoPropagator:
 
     # ---- SAM2 propagation (default mode) ----
     def propagate(self, video_path, out_path, *, keyframe_interval=30,
-                  writer_fps=30.0, show=False, stride=1, proc_size=0):
+                  writer_fps=30.0, show=False, stride=1, proc_size=0,
+                  track_buffer=200, track_match=0.85, track_min_hits=3):
         """Run keyframe-seeded SAM2 propagation over the whole video.
 
         RF-DETR detects on every `keyframe_interval`-th frame; those detections seed
@@ -415,8 +466,53 @@ class SAM2VideoPropagator:
         # is what grows). The trade-off is some CPU<->GPU transfer latency per
         # frame, acceptable for an offline demo. (init_state defaults both to
         # False; we opt in for memory safety on limited GPUs.)
+        #
+        # Feed SAM2 a JPEG frame DIRECTORY, not the mp4. In the installed SAM2,
+        # `load_video_frames_from_video_file` (sam2/utils/misc.py:280) appends every
+        # decoded frame to a python list and then `torch.stack`s it (misc.py:301),
+        # so peak RAM is ~2x the final num_frames x 3 x 1024 x 1024 fp32 buffer
+        # (~48 GB transient at 1918 frames) and the 40G MemoryMax cap SIGTERMs the
+        # long clips at load time. `load_video_frames_from_jpg_images` (misc.py:213)
+        # instead fills one preallocated `torch.zeros(num_frames, 3, S, S)`
+        # (misc.py:267) in place — no 2x spike. Frames go to a temp dir beside the
+        # proxy (i.e. on /mnt/LinuxBackup2, never ~), named 00000.jpg upward because
+        # SAM2 sorts by `int(os.path.splitext(p)[0])` (misc.py:247).
+        # Opt-in (SAM2PROP_JPG_FRAMES=1) because the JPEG re-encode perturbs SAM2
+        # masks slightly (165 vs 164 id_switches on the reference clip); use it for
+        # clips too long for the mp4 loader's 2x stack transient.
+        sam2_frames_dir = None
+        _jpg_src = sam2_video_path
+        if os.environ.get("SAM2PROP_JPG_FRAMES") == "1":
+            print("[sam2prop] jpg-frames load path (SAM2PROP_JPG_FRAMES=1)")
+            try:
+                import tempfile as _tempfile, subprocess as _subprocess
+                sam2_frames_dir = _tempfile.mkdtemp(
+                    suffix="_sam2frames", dir=str(Path(_jpg_src).resolve().parent))
+                _r = _subprocess.run(
+                    ["ffmpeg", "-y", "-v", "error", "-i", _jpg_src, "-q:v", "2",
+                     "-start_number", "0", os.path.join(sam2_frames_dir, "%05d.jpg")],
+                    check=False, capture_output=True)
+                _n_jpg = len([p for p in os.listdir(sam2_frames_dir) if p.endswith(".jpg")])
+                if _r.returncode != 0 or _n_jpg == 0:
+                    raise RuntimeError(f"ffmpeg frame extraction failed rc={_r.returncode}")
+                print(f"[sam2prop] extracted {_n_jpg} JPEG frames for SAM2 -> {sam2_frames_dir}")
+                import atexit as _atexit, shutil as _shutil
+                _fd = sam2_frames_dir
+                _atexit.register(lambda d=_fd: _shutil.rmtree(d, ignore_errors=True))
+            except Exception as e:  # noqa: BLE001 - fall back to the mp4 path
+                print(f"[sam2prop] JPEG frame extraction unavailable ({e}); using mp4 path")
+                if sam2_frames_dir is not None:
+                    import shutil as _shutil
+                    _shutil.rmtree(sam2_frames_dir, ignore_errors=True)
+                    sam2_frames_dir = None
+        # async_loading_frames is left at its default False: the installed
+        # AsyncVideoFrameLoader (misc.py:104) returns a list of N separately
+        # allocated per-frame tensors filled by a background thread, which is the
+        # same total footprint as the preallocated block but fragmented and racing
+        # propagation. The synchronous preallocated path is the one with no spike.
         inference_state = sam2.init_state(
-            sam2_video_path, offload_video_to_cpu=True, offload_state_to_cpu=True)
+            sam2_frames_dir or sam2_video_path,
+            offload_video_to_cpu=True, offload_state_to_cpu=True)
         # Re-open a reader on the (possibly downscaled proxy) video for the
         # keyframe-seed detection loop and the second-pass overlay. Reading the
         # proxy keeps RF-DETR detection, SAM2 frames, and the overlay writer all at
@@ -456,13 +552,14 @@ class SAM2VideoPropagator:
         # We read the keyframe images directly (cheap; SAM2 already loaded all
         # frames, but we need RGB at full res for RF-DETR).
         total_prompts = 0
+        obj_cap_hit = False
         for kf in keyframes:
             cap.set(cv2.CAP_PROP_POS_FRAMES, kf)
             ok, frame = cap.read()
             if not ok:
                 continue
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            dets = self._detect(rgb)
+            dets = self._cap_dets(self._detect(rgb))
             masks = self._masks_from_dets(dets, proc_H, proc_W) if self.is_seg else None
             boxes = self._box_from_dets(dets)
             n = 0 if boxes is None else len(boxes)
@@ -478,6 +575,12 @@ class SAM2VideoPropagator:
                     if iou > best_iou:
                         best_iou = iou; target_obj = oid
                 if target_obj is None:
+                    if next_obj_id > self.MAX_SAM2_OBJECTS:
+                        if not obj_cap_hit:
+                            print(f"[sam2prop] MAX_SAM2_OBJECTS={self.MAX_SAM2_OBJECTS} "
+                                  f"reached — dropping further new objects (RAM guard)")
+                            obj_cap_hit = True
+                        continue
                     target_obj = next_obj_id; next_obj_id += 1
                 obj_boxes[target_obj] = box
                 if masks is not None:
@@ -502,7 +605,7 @@ class SAM2VideoPropagator:
                    f"keyframe of {video_path}; SAM2 has nothing to propagate.")
             if not self.auto_conf:
                 print(f"[sam2prop] {msg}\n[sam2prop] retrying with --auto_conf "
-                      f"(probe + lower conf to the frame-0 score median)...")
+                      f"(probe + lower conf to the frame-0 top-K score)...")
                 self.auto_conf = True
                 if first_keyframe_rgb is None:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, keyframes[0])
@@ -519,7 +622,7 @@ class SAM2VideoPropagator:
                     if not ok:
                         continue
                     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    dets = self._detect(rgb)
+                    dets = self._cap_dets(self._detect(rgb))
                     masks = self._masks_from_dets(dets, proc_H, proc_W) if self.is_seg else None
                     boxes = self._box_from_dets(dets)
                     n = 0 if boxes is None else len(boxes)
@@ -530,6 +633,12 @@ class SAM2VideoPropagator:
                             (oid for oid, ob in obj_boxes.items() if _iou(box, ob) >= 0.3),
                             None)
                         if target_obj is None:
+                            if next_obj_id > self.MAX_SAM2_OBJECTS:
+                                if not obj_cap_hit:
+                                    print(f"[sam2prop] MAX_SAM2_OBJECTS={self.MAX_SAM2_OBJECTS} "
+                                          f"reached — dropping further new objects (RAM guard)")
+                                    obj_cap_hit = True
+                                continue
                             target_obj = next_obj_id; next_obj_id += 1
                         obj_boxes[target_obj] = box
                         if masks is not None:
@@ -574,7 +683,8 @@ class SAM2VideoPropagator:
         # for every frame's forward pass. (Matches SAM2 README's documented usage.)
         with self._sam2_infer_ctx():
             for frame_idx, obj_ids, video_res_masks in sam2.propagate_in_video(inference_state):
-                # video_res_masks: (num_objs, H, W) bool at video resolution.
+                # video_res_masks: (num_objs, 1, H, W) float LOGITS at video
+                # resolution — thresholded at 0.0 below, never cast straight to bool.
                 # Store masks as compact COCO RLE (pycocotools.mask.encode) instead
                 # of full (H,W) bool arrays. A 960x540 full-frame bool mask is 518 KB
                 # as a numpy array but ~1-3 KB as RLE — a ~100x reduction in the
@@ -584,7 +694,16 @@ class SAM2VideoPropagator:
                 # RLE decodes losslessly in the overlay pass below via mask.decode.
                 fm = {}
                 for oi, oid in enumerate(obj_ids):
-                    m = video_res_masks[oi].detach().cpu().numpy().astype(bool)
+                    # BUG 10 ROOT CAUSE: propagate_in_video yields raw mask LOGITS
+                    # (float), not booleans — `_get_orig_video_res_output` interpolates
+                    # logits and `_apply_non_overlapping_constraints` only clamps the
+                    # losers to about -10, it does not zero them. `.astype(bool)` on a
+                    # float logit map is True wherever the logit is not exactly 0.0,
+                    # i.e. the ENTIRE frame, for EVERY object — which is precisely the
+                    # "all masks collapse into one giant box" regression. Threshold at
+                    # 0.0 first, exactly as the upstream SAM2 notebook does
+                    # (`(out_mask_logits[i] > 0.0)`).
+                    m = (video_res_masks[oi] > 0.0).detach().cpu().numpy()
                     # SAM2 masks may carry a leading singleton (e.g. (1, H, W) when the
                     # predictor returns per-object logits with a mask dim). Reduce to a
                     # single (H, W) plane so downstream np.where(m) unpacks 2 values.
@@ -603,6 +722,19 @@ class SAM2VideoPropagator:
                     if self.device == "cuda":
                         import torch
                         torch.cuda.empty_cache()
+                # Sliding-window eviction of SAM2's per-frame non-cond state
+                # (sam2_video_predictor L614 stores ~0.77 MB per frame per object,
+                # unconditionally, for the WHOLE clip: 64 objects x ~49 MB/frame
+                # blew the 40 GB cap on the 958- and 1395-frame clips). Only the
+                # last num_maskmem=7 (sam2_base L539) and max_obj_ptrs_in_encoder=16
+                # (sam2_base L612) frames are ever re-read, so a 32-frame window is
+                # bit-identical output. cond_frame_outputs are the prompt frames and
+                # are NEVER touched. This installed version keeps no duplicate
+                # top-level inference_state["output_dict"], so per-obj is the only store.
+                stale = int(frame_idx) - self.NON_COND_MEM_KEEP
+                if stale >= 0:
+                    for _od in inference_state["output_dict_per_obj"].values():
+                        _od["non_cond_frame_outputs"].pop(stale, None)
             sam2.reset_state(inference_state)
             # Final cleanup after the full propagation pass.
             import gc
@@ -614,7 +746,12 @@ class SAM2VideoPropagator:
         # Second pass: read video again, overlay propagated masks, run ByteTrack on
         # propagated boxes for IDs, write the annotated mp4.
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        tracker, tracker_name = _make_tracker(kind="bytetrack", track_conf=self.conf)
+        # Same ByteTrack settings as propagate_baseline, so a SAM2-prop vs baseline
+        # comparison differs only in where the masks come from, not in association.
+        tracker, tracker_name = _make_tracker(
+            kind="bytetrack", track_conf=self.conf, track_buffer=track_buffer,
+            track_match=track_match, track_min_hits=track_min_hits,
+            frame_rate=writer_fps)
         unique_ids, confirmed_ids, id_hits = set(), set(), {}
         per_frame_overlay_boxes: dict = {}  # frame_idx -> xyxy per obj_id (for metrics)
         # per_frame_tracked_masks: frame_idx -> {tracker_id: mask(bool H,W)}.
@@ -667,7 +804,7 @@ class SAM2VideoPropagator:
                         ti = tids[i]
                         if ti is None or int(ti) < 0:
                             continue
-                        tracked_for_frame[int(ti)] = det_mask[i]
+                        tracked_for_frame[int(ti)] = _encode_rle(det_mask[i])
                     if tracked_for_frame:
                         per_frame_tracked_masks[frame_idx] = tracked_for_frame
                 # Consistency: match each propagated box to the best fresh RF-DETR box.
@@ -711,6 +848,10 @@ class SAM2VideoPropagator:
         _remux_to_h264(out_path)
         if show:
             cv2.destroyAllWindows()
+        # Clean up the temp JPEG frame dir (if any); atexit is the crash-path backstop.
+        if sam2_frames_dir is not None:
+            import shutil as _shutil
+            _shutil.rmtree(sam2_frames_dir, ignore_errors=True)
         # Clean up the temp downscaled proxy (if any) now that SAM2 + overlay are done.
         if temp_proxy is not None:
             try:
@@ -824,10 +965,13 @@ class SAM2VideoPropagator:
                 frame = cv2.resize(frame, (out_W, out_H), interpolation=cv2.INTER_AREA)
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             dets = self._detect(rgb)
-            masks = self._masks_from_dets(dets, out_H, out_W) if self.is_seg else None
             if hasattr(tracker, "set_frame"):
                 tracker.set_frame(frame)
             dets = tracker.update_with_detections(dets)
+            # Masks MUST come from the POST-tracker dets: ByteTrack subsets and
+            # reorders rows, so indexing a pre-tracker mask array with post-tracker
+            # row indices keyed masks to the wrong tracks (fixed 2026-09-01).
+            masks = self._masks_from_dets(dets, out_H, out_W) if self.is_seg else None
             _track_count(dets, unique_ids, confirmed_ids, id_hits, self.conf)
             out = _draw_overlay(frame, dets, self.conf)
             dt = max(1e-6, time.time() - t0)
@@ -847,7 +991,9 @@ class SAM2VideoPropagator:
                 for i in range(len(tids)):
                     ti = int(tids[i]) if tids[i] is not None and tids[i] >= 0 else -1
                     if ti >= 0:
-                        fm[ti] = masks[i]
+                        # RLE, not raw bool: a raw (H,W) mask per track per frame is
+                        # the unbounded RAM store that fed the 2026-09-01 blowup.
+                        fm[ti] = _encode_rle(masks[i])
             per_frame_masks[frame_idx] = fm
             per_frame_boxes[frame_idx] = getattr(dets, "xyxy", None)
         cap.release(); writer.release()
@@ -1043,28 +1189,65 @@ def compute_temporal_metrics(per_frame_masks: dict) -> dict:
         rolling mean) — higher = smoother mask edges over time.
       * n_instances_mean: mean instances per frame.
     All in [0,1] (or count); higher IoU/persistence/smoothness = better.
+
+    Track-3 additions (2026-08-31), same single pass, same tracker-ID keying:
+      * consecutive_iou_median / consecutive_iou_p10: the distribution behind
+        mean_consecutive_iou. The mean hides the failure mode this study is
+        about — a handful of tracks whose mask jumps frame to frame — so the
+        tenth percentile is the number that separates the two pipelines.
+      * track_len_{mean,median,p10,max}: per-track survival in frames.
+      * n_instances_std / n_instances_cv: per-frame instance-count stability.
+      * id_switches_relocated: the switch definition the docstring above has
+        always claimed but never computed — a track that vanishes and a NEW
+        track that appears within `switch_window` frames whose first mask
+        overlaps the vanished one at IoU >= 0.5. `id_switches` keeps its old
+        fragmentation-proxy meaning so earlier JSONs stay comparable.
     """
     if not per_frame_masks:
         return {"mean_consecutive_iou": 0.0, "id_persistence": 0.0,
                 "id_switches": 0, "boundary_smoothness": 0.0, "n_instances_mean": 0.0,
-                "n_frames": 0}
+                "n_frames": 0,
+                "consecutive_iou_median": 0.0, "consecutive_iou_p10": 0.0,
+                "track_len_mean": 0.0, "track_len_median": 0.0,
+                "track_len_p10": 0.0, "track_len_max": 0,
+                "n_instances_std": 0.0, "n_instances_cv": 0.0,
+                "id_switches_relocated": 0, "n_tracks": 0}
     frames = sorted(per_frame_masks.keys())
     n_frames = len(frames)
     # Per-ID IoU across consecutive frames.
     ious = []
     per_id_lens = {}
     prev_mask_by_id: dict = {}
-    for f in frames:
+    # ID-switch bookkeeping: masks of tracks that just vanished, and the frame
+    # they vanished on, so a new track appearing on top of one can be spotted.
+    switch_window = 5
+    vanished: list = []  # (frame_idx, mask)
+    ever_seen: set = set()
+    n_switches = 0
+    for fi, f in enumerate(frames):
         cur = per_frame_masks[f]
-        seen = set()
-        for oid, m in cur.items():
-            seen.add(oid)
+        cur_decoded = {oid: _decode_rle(m) for oid, m in cur.items()}
+        seen = set(cur_decoded)
+        # Retire the tracks that ended on the previous frame BEFORE testing this
+        # frame's new tracks, or a hand-off inside a single frame is missed.
+        for oid, vm in prev_mask_by_id.items():
+            if oid not in seen:
+                vanished.append((fi, vm))
+        vanished = [(vf, vm) for vf, vm in vanished if fi - vf <= switch_window]
+        for oid, mb in cur_decoded.items():
             per_id_lens[oid] = per_id_lens.get(oid, 0) + 1
             if oid in prev_mask_by_id:
-                ious.append(_mask_iou(prev_mask_by_id[oid], _decode_rle(m)))
+                ious.append(_mask_iou(prev_mask_by_id[oid], mb))
+            elif oid not in ever_seen and fi > 0:
+                # A brand-new track. If it lands on a track that vanished in the
+                # last few frames, that is an identity switch, not a new animal.
+                if any(_mask_iou(vm, mb) >= 0.5 for vf, vm in vanished
+                       if fi - vf <= switch_window):
+                    n_switches += 1
+            ever_seen.add(oid)
         # IDs not seen this frame drop out of the memory (temporal IoU only
         # between consecutive appearances).
-        prev_mask_by_id = {oid: _decode_rle(cur[oid]) for oid in seen}
+        prev_mask_by_id = {oid: cur_decoded[oid] for oid in seen}
     mean_iou = float(np.mean(ious)) if ious else 0.0
     # Persistence: mean per-ID coverage over the whole video.
     persistence = float(np.mean([l / n_frames for l in per_id_lens.values()])) if per_id_lens else 0.0
@@ -1080,8 +1263,22 @@ def compute_temporal_metrics(per_frame_masks: dict) -> dict:
     bsmooth = 0.0
     if len(b_lens) > 1 and max(b_lens) > 0:
         bsmooth = 1.0 - min(float(np.std(b_lens) / (np.mean(b_lens) + 1e-6)), 1.0)
-    n_inst_mean = float(np.mean([len(per_frame_masks[f]) for f in frames]))
+    counts = np.array([len(per_frame_masks[f]) for f in frames], dtype=float)
+    n_inst_mean = float(counts.mean())
+    n_inst_std = float(counts.std())
+    lens = np.array(list(per_id_lens.values()), dtype=float) if per_id_lens else np.zeros(0)
+    iou_arr = np.array(ious, dtype=float) if ious else np.zeros(0)
     return {
+        "consecutive_iou_median": round(float(np.median(iou_arr)), 4) if iou_arr.size else 0.0,
+        "consecutive_iou_p10": round(float(np.percentile(iou_arr, 10)), 4) if iou_arr.size else 0.0,
+        "track_len_mean": round(float(lens.mean()), 4) if lens.size else 0.0,
+        "track_len_median": round(float(np.median(lens)), 4) if lens.size else 0.0,
+        "track_len_p10": round(float(np.percentile(lens, 10)), 4) if lens.size else 0.0,
+        "track_len_max": int(lens.max()) if lens.size else 0,
+        "n_tracks": int(len(per_id_lens)),
+        "n_instances_std": round(n_inst_std, 4),
+        "n_instances_cv": round(float(n_inst_std / n_inst_mean), 4) if n_inst_mean > 0 else 0.0,
+        "id_switches_relocated": int(n_switches),
         "mean_consecutive_iou": round(mean_iou, 4),
         "id_persistence": round(persistence, 4),
         "boundary_smoothness": round(bsmooth, 4),
@@ -1098,6 +1295,47 @@ def _mask_iou(a, b) -> float:
     inter = np.logical_and(a, b).sum()
     union = np.logical_or(a, b).sum()
     return float(inter / union) if union > 0 else 0.0
+
+
+def _append_md_block(md_path, clip, metrics: dict) -> None:
+    """Append one clip-by-pipeline markdown table to `md_path` (created if absent).
+
+    Four metric families, in the order the Track-3 study asks for them: mask IoU
+    between consecutive frames of the same track, identity switches, how long a
+    track survives, and how much the per-frame count wobbles.
+    """
+    rows = [
+        ("consecutive-frame mask IoU, mean", metrics.get("mean_consecutive_iou")),
+        ("consecutive-frame mask IoU, median", metrics.get("consecutive_iou_median")),
+        ("consecutive-frame mask IoU, p10", metrics.get("consecutive_iou_p10")),
+        ("identity switches (relocated)", metrics.get("id_switches_relocated")),
+        ("identity fragments (tracks not spanning the clip)", metrics.get("id_switches")),
+        ("track survival, mean frames", metrics.get("track_len_mean")),
+        ("track survival, median frames", metrics.get("track_len_median")),
+        ("track survival, p10 frames", metrics.get("track_len_p10")),
+        ("track survival, max frames", metrics.get("track_len_max")),
+        ("instances per frame, mean", metrics.get("n_instances_mean")),
+        ("instances per frame, std", metrics.get("n_instances_std")),
+        ("instances per frame, coefficient of variation", metrics.get("n_instances_cv")),
+        ("tracks", metrics.get("n_tracks")),
+        ("frames", metrics.get("n_frames")),
+    ]
+    lines = [
+        "",
+        f"### {clip} — {metrics.get('mode', '?')}",
+        "",
+        f"tracker `{metrics.get('tracker', '?')}`, proc_size {metrics.get('proc_size')}, "
+        f"stride {metrics.get('stride')}, track_match {metrics.get('track_match')}",
+        "",
+        "| metric | value |",
+        "| --- | --- |",
+    ]
+    lines += [f"| {k} | {v} |" for k, v in rows]
+    lines.append("")
+    p = Path(md_path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("a") as fh:
+        fh.write("\n".join(lines) + "\n")
 
 
 def main():
@@ -1135,16 +1373,24 @@ def main():
     ap.add_argument("--show", action="store_true", help="Display frames live (q to quit).")
     ap.add_argument("--sam2_propagate", action="store_true",
                     help="OPT-IN: use the SAM2 keyframe-seeded mask-propagation path. "
-                         "WARNING (BUG 10): this path is a known regression on dense "
-                         "colonies -- SAM2 mask propagation collapses multiple penguin "
-                         "masks into one giant box. The default per-frame RF-DETR+ByteTrack "
-                         "baseline (propagate_baseline) is the working prefork pipeline; "
-                         "only set this flag to reproduce the SAM2-prop comparison.")
+                         "BUG 10 (masks collapsing into one giant box) was fixed on "
+                         "2026-08-31 -- the cause was casting SAM2's float mask logits "
+                         "straight to bool, which made every mask cover the whole frame. "
+                         "The default remains the per-frame RF-DETR+ByteTrack baseline "
+                         "(propagate_baseline), the prefork pipeline; set this flag for "
+                         "the SAM2-prop arm of the temporal-consistency comparison.")
     ap.add_argument("--no_sam2_propagate", action="store_true",
                     help="DEPRECATED (now the default): per-frame RF-DETR+ByteTrack masks, "
                          "no SAM2. Kept for back-compat with older scripts; a no-op now.")
     ap.add_argument("--metrics_out", default=None,
                     help="Metrics JSON path (default: <out>.metrics.json).")
+    ap.add_argument("--md_out", default=None,
+                    help="Also append a one-clip markdown metrics table to this file "
+                         "(Track-3 temporal-consistency study).")
+    ap.add_argument("--track_match", type=float, default=0.85,
+                    help="ByteTrack minimum matching threshold. 0.85 (not sv's 0.7) "
+                         "keeps two nearby penguins in the surf apart; applies to both "
+                         "the baseline and the SAM2-propagation path.")
     args = ap.parse_args()
 
     if not Path(args.video).is_file():
@@ -1161,17 +1407,19 @@ def main():
 
     if args.sam2_propagate:
         print(f"[sam2prop] SAM2 propagate mode (keyframe_interval={args.keyframe_interval}): {out}")
-        print("[sam2prop] WARNING (BUG 10): SAM2 mask propagation collapses masks into one "
-              "giant box on dense colonies. Default is the working per-frame baseline.")
+        print("[sam2prop] BUG 10 (mask collapse) fixed 2026-08-31: logits are thresholded "
+              "at 0.0 before the bool cast. Per-object masks expected.")
         res = prop.propagate(args.video, out, keyframe_interval=args.keyframe_interval,
                              writer_fps=args.writer_fps, show=args.show, stride=args.stride,
-                             proc_size=args.proc_size)
+                             proc_size=args.proc_size, track_match=args.track_match)
     else:
         out = args.out or (str(Path(args.video).with_suffix("")) + "_baseline.mp4")
         metrics_out = args.metrics_out or (str(out) + ".metrics.json")
         print(f"[sam2prop] baseline mode (per-frame RF-DETR+ByteTrack, no SAM2) [DEFAULT]: {out}")
         res = prop.propagate_baseline(args.video, out, writer_fps=args.writer_fps,
-                                      show=args.show, stride=args.stride)
+                                      show=args.show, stride=args.stride,
+                                      proc_size=args.proc_size,
+                                      track_match=args.track_match)
 
     # Headline metric: tracker-ID-keyed (ByteTrack IDs fragment/swap under occlusion
     # → real tracking numbers). Falls back to the SAM2-object-index dict if the
@@ -1200,7 +1448,14 @@ def main():
     fsub = res.get("frame_subdir")
     if fsub:
         metrics["frame_subdir"] = fsub
+    metrics["video"] = str(args.video)
+    metrics["proc_size"] = int(args.proc_size)
+    metrics["stride"] = int(args.stride)
+    metrics["track_match"] = float(args.track_match)
     Path(metrics_out).write_text(json.dumps(metrics, indent=2))
+    if args.md_out:
+        _append_md_block(args.md_out, Path(args.video).stem, metrics)
+        print(f"[sam2prop] appended markdown block: {args.md_out}")
     print(f"[sam2prop] wrote annotated video: {out}")
     print(f"[sam2prop] wrote metrics JSON: {metrics_out}")
     if fsub:
@@ -1225,9 +1480,8 @@ def main():
               f"{metrics['propagated_vs_rf_match_rate']:.4f} "
               f"(robust: fraction of propagated boxes with best-IoU >= 0.5)")
     if args.sam2_propagate:
-        print("[sam2prop] (SAM2 path) re-run WITHOUT --sam2_propagate for the working "
-              "per-frame baseline (the default; BUG 10 makes the SAM2 path regress "
-              "on dense colonies).")
+        print("[sam2prop] (SAM2 path) re-run WITHOUT --sam2_propagate for the per-frame "
+              "baseline arm of the comparison (the default).")
 
 
 if __name__ == "__main__":

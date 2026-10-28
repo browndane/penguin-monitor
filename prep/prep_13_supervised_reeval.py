@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase 2 prep_13 (file-based): supervised re-eval of 6 real trained ckpts AS-IS
 on the 2 v2 gold corpora, same metric as Phase 1 (pycocotools mask mAP@0.5,
 iscrowd-ignore per-tier, agg=mean of 3 tiers).
@@ -55,6 +56,9 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
 TIERS = ["easy", "medium", "hard"]
+# Which sidecar the current run scored against, recorded into every reeval json
+# so a tercile result can never be mistaken for a fixed-threshold one.
+TIERS_FILE_USED = ""
 
 # Paper in-distribution seg mAP50 (iNat val; OOD gold divergence expected)
 PAPER = {
@@ -64,6 +68,13 @@ PAPER = {
     "rtdetr-3": 0.826,
     "eomt-large": 0.834,
     "yolo11x-seg": 0.581,
+    "yolo11x-seg-native": 0.900,  # native-mosaic fork (report-top-methods top config), iNat test 0.9003
+    # --- OOD coverage gap, added 2026-07-30. In-dist seg mAP50 from the
+    # be64 fair-grid rows of benchmark_results.csv. ---
+    "yolo26x-seg": 0.443,
+    "eomt-smallplus": 0.756,
+    "dinov3-m2f-smallplus": 0.596,
+    "dinov3-m2f-vith16plus": 0.650,
 }
 
 LONG_EDGE_CAP = 2448  # SAM3 OOM cap for >4096px images
@@ -82,15 +93,29 @@ CKPT = {
         "~/bench_any/runs/segment/african-penguin_eomt-large_b2_e125_i640_be32_fair_grid/african-penguin_eomt-large_b2_e125_i640_be32_fair_grid/version_0/checkpoints/last.ckpt"),
     "yolo11x-seg": os.path.expanduser(
         "~/bench_any/runs/segment/african-penguin_yolo11x-seg_b0.98_e150_i640_be64_fair_grid/weights/best.pt"),
+    "yolo11x-seg-native": os.path.expanduser(
+        "~/bench_any/runs/native_yolo_rerun/native_ckpt_fork/best.pt"),  # rsynced from ml2 (syncthing excludes *.pt)
     # --- COMBINED-training ckpts (saw Boulders/SANParks envs during training; gold held out) ---
     "yolo11x-seg-combined": os.path.expanduser(
         "~/bench_any/runs/segment/penguin-seg-combined_yolo11x-seg/weights/best.pt"),
+    "yolo11x-seg-combined-native": os.path.expanduser(
+        "~/bench_any/runs/native_yolo_rerun/native_ckpt_combined_native/best.pt"),  # rsynced from ml2 (syncthing excludes *.pt)
     "rf-detr-seg-large-combined": os.path.expanduser(
         "~/bench_any/runs/segment/penguin-seg-combined_rf-detr-seg-large/checkpoint_best_total.pth"),
     "eomt-large-combined": os.path.expanduser(
         "~/bench_any/runs/segment/penguin-seg-combined_eomt-large/penguin-seg-combined_eomt-large/version_0/checkpoints/epoch=71-step=6264.ckpt"),
     "rtdetr-x-combined": os.path.expanduser(
         "~/bench_any/runs/detect/penguin-seg-combined_rtdetr-x/weights/best.pt"),
+    # --- OOD coverage gap, added 2026-07-30. Same african-penguin fair-grid
+    # training corpus as the six above; none of them saw gold. ---
+    "yolo26x-seg": os.path.expanduser(
+        "~/bench_any/runs/segment/african-penguin_yolo26x-seg_b0.98_e150_i640_be64_fair_grid/weights/best.pt"),
+    "eomt-smallplus": os.path.expanduser(
+        "~/bench_any/runs/segment/african-penguin_eomt-smallplus_b4_e150_i640_be64_fair_grid/african-penguin_eomt-smallplus_b4_e150_i640_be64_fair_grid/version_0/checkpoints/last.ckpt"),
+    "dinov3-m2f-smallplus": os.path.expanduser(
+        "~/bench_any/runs/segment/african-penguin_dinov3-m2f-smallplus_b4_e150_i640_be64_fair_grid"),
+    "dinov3-m2f-vith16plus": os.path.expanduser(
+        "~/bench_any/runs/segment/african-penguin_dinov3-m2f-vith16plus_b2_e150_i640_be64_fair_grid"),
 }
 
 CORPORA = {
@@ -101,6 +126,16 @@ CORPORA = {
     "sanparks": {
         "images": "/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/sanparks-algoa/train/images",
         "tiers": os.path.expanduser("~/bench_any/runs/p5_r1_v2/sanparks/sanparks_tiers.json"),
+    },
+    "pw_v2_200": {
+        "images": os.path.expanduser("~/bench_any/datasets/p5_r1_gold_pw_v2_200/test/images"),
+        "tiers": os.path.expanduser("~/bench_any/runs/p5_r1_gold/pw_v2_200_tiers.json"),
+    },
+    # web-scraped iNaturalist half of the four-corpus v1 gold, split out by prep_20.
+    # 50 images, 394 instances, 51 easy / 331 medium / 12 hard, matching tab:percorpus_v1.
+    "inat_v1_50": {
+        "images": os.path.expanduser("~/bench_any/datasets/p5_r1_gold/test/images"),
+        "tiers": os.path.expanduser("~/bench_any/runs/p5_r1_gold/inat_v1_50_tiers.json"),
     },
 }
 
@@ -345,7 +380,7 @@ def predict_eomt(ckpt_path, img_dir):
     Forward: resize_and_pad_imgs -> model -> last layer -> interpolate 640 ->
     revert -> topk(100) at 640 res -> masks>0 -> INTER_NEAREST to original -> RLE.
     Build once, predict all images."""
-    sys.path.insert(0, "/home/vorse/bench_any/eomt")
+    sys.path.insert(0, "/home/user/bench_any/eomt")
     import torch
     import torch.nn.functional as F
     from models.vit import ViT
@@ -466,6 +501,128 @@ def predict_eomt(ckpt_path, img_dir):
             if i % 10 == 0:
                 print(f"  eomt {i}/{len(files)} {ip.name} -> {len(per)} preds ({time.time()-t0:.1f}s)", flush=True)
     del model, network
+    torch.cuda.empty_cache()
+    return preds
+
+
+# DINOv3-M2F is not a plain HuggingFace checkpoint. config.json still describes the
+# Swin backbone of the Mask2Former the upstream repo starts from, while the weights
+# carry a DINOv3 encoder plus adapter, so AutoModel...from_pretrained would build a
+# Swin and drop every encoder tensor without complaining. The saved
+# dinov3_backbone_config.json names the model file that rebuilds the right backbone;
+# which HF DINOv3 goes into it is decided by DINOV3_M2F_MODEL, exactly as at training
+# time, because the vitlarge model file defaults to vitl16 and would otherwise give
+# vith16plus the wrong encoder. Both hazards are silent, hence the strict key check.
+DINOV3_M2F_BACKBONE = {
+    "dinov3-m2f-smallplus": "facebook/dinov3-vits16plus-pretrain-lvd1689m",
+    "dinov3-m2f-vith16plus": "facebook/dinov3-vith16plus-pretrain-lvd1689m",
+}
+DINOV3_M2F_CAP = 2048  # post-process resolution cap; 5184x3456 Boulders OOMs at native
+
+
+def _load_dinov3_m2f(ckpt_tag, run_dir):
+    """Rebuild the trained DINOv3-Mask2Former and refuse a partial weight load."""
+    import importlib.util
+    import torch
+    from safetensors.torch import load_file
+    from transformers import AutoImageProcessor
+
+    model_path = Path(run_dir) / "best_model"
+    if not (model_path / "model.safetensors").is_file():
+        raise FileNotFoundError(f"no best_model/model.safetensors under {run_dir}")
+
+    backbone_cfg = json.load(open(model_path / "dinov3_backbone_config.json"))
+    model_file = backbone_cfg["model_file"]
+    spec = importlib.util.spec_from_file_location(Path(model_file).stem, model_file)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+    cfg = json.load(open(model_path / "config.json"))
+    os.environ["DINOV3_M2F_MODEL"] = DINOV3_M2F_BACKBONE[ckpt_tag]
+    model = module.create_mask2former_dinov3_model(
+        label2id=cfg.get("label2id", {}), id2label=cfg.get("id2label", {}),
+        freeze_backbone=False)
+
+    state = load_file(str(model_path / "model.safetensors"))
+    cur = model.state_dict()
+    bad_shape = [k for k, v in state.items() if k in cur and tuple(cur[k].shape) != tuple(v.shape)]
+    res = model.load_state_dict(state, strict=False)
+    missing = [k for k in getattr(res, "missing_keys", []) if "num_batches_tracked" not in k]
+    unexpected = list(getattr(res, "unexpected_keys", []))
+    if bad_shape or missing or unexpected:
+        raise RuntimeError(
+            f"[{ckpt_tag}] checkpoint does not fit the rebuilt model: "
+            f"{len(bad_shape)} shape mismatches, {len(missing)} missing, "
+            f"{len(unexpected)} unexpected. First few: "
+            f"{bad_shape[:3]} {missing[:3]} {unexpected[:3]}. The backbone identity or "
+            f"the model file is wrong; scoring this would be meaningless.")
+    print(f"  [{ckpt_tag}] loaded all {len(state)} tensors onto "
+          f"{DINOV3_M2F_BACKBONE[ckpt_tag]}", flush=True)
+
+    proc = AutoImageProcessor.from_pretrained(str(model_path), use_fast=True)
+    model = model.to("cuda").eval()
+    return model, proc
+
+
+def predict_dinov3_m2f(run_dir, img_dir, ckpt_tag):
+    """Native-mask instance predictions from a trained DINOv3-Mask2Former run.
+
+    Post-processing mirrors the in-distribution eval in dinov3_m2f_any_tune.py
+    (threshold 0.0, return_binary_maps, score floor 1e-3), so the out-of-distribution
+    number is comparable with the fair-grid seg mAP50 it is subtracted from. The one
+    departure is the resolution cap: gold images run to 5184x3456 and 100 query masks
+    at that size exhaust the card, so masks come back capped and are then taken to
+    original size with INTER_NEAREST, as predict_eomt already does.
+    """
+    import torch
+    from PIL import Image
+
+    model, proc = _load_dinov3_m2f(ckpt_tag, run_dir)
+    files = _img_files(img_dir)
+    preds = {}
+    t0 = time.time()
+    with torch.inference_mode():
+        for i, ip in enumerate(files):
+            img_np = cv2.imread(str(ip))
+            H0, W0 = img_np.shape[:2]
+            long_side = max(H0, W0)
+            if long_side > DINOV3_M2F_CAP:
+                f = DINOV3_M2F_CAP / long_side
+                Ht, Wt = round(H0 * f), round(W0 * f)
+            else:
+                Ht, Wt = H0, W0
+            im = Image.fromarray(img_np[:, :, ::-1]).convert("RGB")
+            inputs = proc(images=im, return_tensors="pt").to("cuda")
+            out = model(**inputs)
+            post = proc.post_process_instance_segmentation(
+                out, threshold=0.0, target_sizes=[(Ht, Wt)], return_binary_maps=True)[0]
+
+            per = []
+            infos = post.get("segments_info") or []
+            if infos:
+                masks = post["segmentation"].to(torch.bool).cpu().numpy()
+                for k, seg in enumerate(infos):
+                    sc = float(seg["score"])
+                    if sc <= 1e-3 or k >= len(masks):
+                        continue
+                    m = masks[k].astype(np.uint8)
+                    if m.sum() == 0:
+                        continue
+                    if (Ht, Wt) != (H0, W0):
+                        m = cv2.resize(m, (W0, H0), interpolation=cv2.INTER_NEAREST)
+                    ys, xs = np.where(m > 0)
+                    if len(xs) == 0:
+                        continue
+                    per.append({"rle": encode_mask(m.astype(bool)), "score": sc,
+                                "box": [float(xs.min()), float(ys.min()),
+                                        float(xs.max()), float(ys.max())]})
+            preds[ip.name] = per
+            del inputs, out, post, img_np
+            if i % 10 == 0 or i == len(files) - 1:
+                print(f"  dinov3-m2f {i+1}/{len(files)} {ip.name} -> {len(per)} preds "
+                      f"({time.time()-t0:.1f}s)", flush=True)
+    del model
     torch.cuda.empty_cache()
     return preds
 
@@ -737,14 +894,25 @@ def run_eval_for_ckpt(ckpt_tag, corpus_name, preds_per_img, tiers_manifest, out_
     pred_list = build_pred_coco(preds_per_img, tiers_manifest)
     print(f"  [{ckpt_tag}/{corpus_name}] COCO preds: {len(pred_list)}", flush=True)
     tier_maps = {}
+    tier_n = {}
     for t in TIERS:
         gt_dict = build_gt_coco(tiers_manifest, t)
         n_active = sum(1 for a in gt_dict["annotations"] if a["iscrowd"] == 0)
-        ap_t = eval_tier(gt_dict, pred_list)
+        tier_n[t] = n_active
+        # A tier with no gold instances is not measured. eval_tier returns 0.0 there,
+        # which would read as a score of zero and drag the aggregate down.
+        ap_t = eval_tier(gt_dict, pred_list) if n_active else None
         tier_maps[t] = ap_t
-        print(f"  [{ckpt_tag}/{corpus_name}] {t}: {n_active} active GT -> {ap_t:.1f}%" if ap_t is not None else f"  {t}: None", flush=True)
-    valid = [tier_maps[t] for t in TIERS if tier_maps[t] is not None]
-    agg = float(np.mean(valid)) if len(valid) == 3 else None
+        print(f"  [{ckpt_tag}/{corpus_name}] {t}: {n_active} active GT -> {ap_t:.1f}%" if ap_t is not None else f"  [{ckpt_tag}/{corpus_name}] {t}: {n_active} active GT -> not measured", flush=True)
+    present = [t for t in TIERS if tier_n[t] > 0]
+    valid = [tier_maps[t] for t in present if tier_maps[t] is not None]
+    agg = float(np.mean(valid)) if present and len(valid) == len(present) else None
+    # Instance-weighted aggregate beside the unweighted one. Under terciles the
+    # two coincide to a rounding error; a wider gap means the tiers are not the
+    # sizes they claim.
+    scored = [t for t in present if tier_maps[t] is not None]
+    w = sum(tier_n[t] for t in scored)
+    agg_iw = (sum(tier_maps[t] * tier_n[t] for t in scored) / w) if w else None
     rec = quick_recall(tiers_manifest, preds_per_img)
     print(f"  [{ckpt_tag}/{corpus_name}] AGG: {agg:.1f}% recall: {rec:.4f}" if agg else "  AGG: None", flush=True)
     result = {
@@ -754,9 +922,12 @@ def run_eval_for_ckpt(ckpt_tag, corpus_name, preds_per_img, tiers_manifest, out_
         "medium": tier_maps.get("medium"),
         "hard": tier_maps.get("hard"),
         "agg": agg,
+        "agg_iw": agg_iw,
+        "n_gt_per_tier": tier_n,
+        "tiers_file": str(TIERS_FILE_USED),
         "recall": round(rec, 4),
         "paper_in_dist_mAP50": PAPER.get(ckpt_tag),
-        "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers",
+        "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of the tiers that carry gold instances",
     }
     out_reeval = out_dir / f"{ckpt_tag}_reeval.json"
     json.dump(result, open(out_reeval, "w"), indent=2)
@@ -771,14 +942,22 @@ def main():
     ap.add_argument("--out-dir", required=True, help="base out dir, e.g. ~/bench_any/runs/p5_r1_v2")
     ap.add_argument("--skip-predict", action="store_true",
                     help="reuse existing <ckpt>_pred.json; only re-eval")
+    ap.add_argument("--tiers", default=None,
+                    help="override the corpus tiers sidecar, e.g. the prep_22 "
+                         "tercile file; defaults to CORPORA[corpus]['tiers']")
     args = ap.parse_args()
 
     out_base = Path(args.out_dir)
     corpus_dir = out_base / args.corpus
     corpus_dir.mkdir(parents=True, exist_ok=True)
 
-    tiers_data = json.load(open(CORPORA[args.corpus]["tiers"]))
+    global TIERS_FILE_USED
+    tiers_path = os.path.expanduser(args.tiers) if args.tiers else CORPORA[args.corpus]["tiers"]
+    TIERS_FILE_USED = tiers_path
+    tiers_data = json.load(open(tiers_path))
     tiers_manifest = tiers_data["manifest"]
+    print(f"tiers: {tiers_path} mode={tiers_data.get('tier_mode', 'fixed 0.30/0.58 (prep_09)')} "
+          f"counts={tiers_data.get('tier_counts')}", flush=True)
     img_dir = CORPORA[args.corpus]["images"]
     print(f"=== {args.ckpt} on {args.corpus} ({len(tiers_manifest)} imgs) ===", flush=True)
 
@@ -789,13 +968,15 @@ def main():
     else:
         ckpt_path = CKPT[args.ckpt]
         t0 = time.time()
-        if args.ckpt == "yolo11x-seg" or args.ckpt == "yolo11x-seg-combined":
+        if args.ckpt in ("yolo11x-seg", "yolo11x-seg-combined", "yolo26x-seg", "yolo11x-seg-native", "yolo11x-seg-combined-native"):
             preds = predict_yolo11x(ckpt_path, img_dir)
         elif args.ckpt in ("rf-detr-seg-xlarge", "rf-detr-seg-large",
                            "rf-detr-seg-large-combined"):
             preds = predict_rfdetr_seg(args.ckpt, ckpt_path, img_dir)
-        elif args.ckpt in ("eomt-large", "eomt-large-combined"):
+        elif args.ckpt in ("eomt-large", "eomt-large-combined", "eomt-smallplus"):
             preds = predict_eomt(ckpt_path, img_dir)
+        elif args.ckpt in ("dinov3-m2f-smallplus", "dinov3-m2f-vith16plus"):
+            preds = predict_dinov3_m2f(ckpt_path, img_dir, args.ckpt)
         elif args.ckpt in ("rtdetr-4", "rtdetr-3"):
             proc, mdl = get_sam3_box()
             preds = predict_rtdetr_sam3(ckpt_path, img_dir, proc, mdl)

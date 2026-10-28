@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase C1: image-clustered bootstrap confidence intervals for close mAP comparisons.
 
 Reads the surviving per-image COCO prediction files for the instance-segmentation models
@@ -33,14 +34,14 @@ from pycocotools.cocoeval import COCOeval
 
 # -----------------------------------------------------------------------------
 # Model -> prediction file mapping (verified by the C1 inventory, 2026-07-15).
-# All paths are under /home/vorse/bench_any/runs/segment/ (or detect for RT-DETR).
+# All paths are under /home/user/bench_any/runs/segment/ (or detect for RT-DETR).
 # The "_bench_predictions_resolved.json" is the cat-id-canonicalised file (cat_id=1);
 # the "_bench_predictions_fixed.json" is the BUG-11-corollary broken file (cat_id=0 -> 0.0 mAP).
 # RF-DETR stores predictions as "predictions_test.json" (native segm).
 # RT-DETR is a detector; its mask-mAP comes from SAM2 box-prompt -> "_bench_sam2_seg.json".
 # YOLO11x/26x native mask head is the BUG-16 broken one; we report it but flag the anomaly.
 # -----------------------------------------------------------------------------
-BENCH = "/home/vorse/bench_any/runs"
+BENCH = "/home/user/bench_any/runs"
 
 MODELS: Dict[str, Tuple[str, str, str]] = {
     # model_tag: (pred_file_relpath, eval_iouType, note)

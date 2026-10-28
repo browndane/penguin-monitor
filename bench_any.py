@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # Benchmark orchestrator: routes each --models entry to the matching *_any_tune.py
 # subprocess and aggregates their results.csv into one CSV + compact summary.
 #
@@ -7,14 +8,15 @@
 #                dinov3-m2f-smallplus eomt-large dinov3-semseg-vits16plus \
 #       --epochs 50 --imgsz 640 --batch_sz 4 > ~/bench.out 2>&1 & disown
 # OR auto batch:
-# nohup python bench_any.py --data /mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/RoboflowDatasets/SEGMENT/penguin-seg-combined/ --models ~/yolo_general/models/yolo11x-seg.pt ~/bench_any/detr_weights/rtdetr-x.pt ~/bench_any/detr_weights/rf-detr-seg-large.pt dinov3-m2f-smallplus eomt-large dinov3-semseg-vits16plus --epochs 150 --imgsz 640 --batch_sz 0.8 --batch_effective 32 > ~/bench2.out 2>&1 & disown
+# nohup python bench_any.py --data /mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/RoboflowDatasets/SEGMENT/penguin-seg-combined/ --models ~/yolo_general/models/yolo11x-seg.pt ~/bench_any/detr_weights/rtdetr-x.pt ~/bench_any/detr_weights/rf-detr-seg-large.pt dinov3-m2f-smallplus eomt-large dinov3-semseg-vits16plus --epochs 125 --imgsz 640 --batch_sz 0.8 --batch_effective 32 > ~/bench2.out 2>&1 & disown
 
 
 import os, sys, csv, argparse, subprocess, hashlib, json, time
 from pathlib import Path
 
 from bench_schema import (
-    ALL_METRIC_KEYS, PERF_KEYS, RUN_BATCH_KEYS, SUPPORT_KEYS, zero_metrics,
+    ALL_METRIC_KEYS, PERF_KEYS, RUN_BATCH_KEYS, RUN_STOP_KEYS, SUPPORT_KEYS,
+    zero_metrics,
     DIFFICULTY_METRIC_KEYS,
 )
 from bench_model_registry import (
@@ -88,28 +90,46 @@ def build_config_tag(args, batch_sz):
         parts.append(f"be{args.batch_effective}")
     if getattr(args, "lr", 0) and args.lr > 0:
         parts.append(f"lr{args.lr:g}")
-    if getattr(args, "aug_policy", "native") and args.aug_policy != "native":
-        parts.append(args.aug_policy)
+    # Always emit the aug_policy segment so every config is self-describing.
+    # Previously 'native' was omitted, making a native run's dir name look like
+    # a fair run (and letting a fair run's --run_tag native shadow it — see R.4).
+    aug_policy = getattr(args, "aug_policy", "") or ""
+    if aug_policy:
+        parts.append(aug_policy)
     if getattr(args, "aug_grid", False):
         parts.append("grid")
     if getattr(args, "tune", False):
         parts.append("tune")
-    user_tag = getattr(args, "run_tag", "") or ""
-    if user_tag.strip():
-        parts.append(user_tag.strip().replace(" ", "-"))
+    user_tag = (getattr(args, "run_tag", "") or "").strip()
+    if user_tag:
+        parts.append(user_tag.replace(" ", "-"))
     return "_".join(parts)
+
+
+def _ds_run_token(data_dir):
+    """Full resolved dataset dir name — the run-name identity token.
+
+    Two penguin datasets truncate to the same 15-char prefix
+    ('african-penguin'): the iNat veryclean split and the african-penguin
+    set. A [:15] cap collapsed both into one run_dir, so a sweep on the
+    second dataset overwrote/parked the first's predictions + weights.
+    The full name is also what the legacy iNat run dirs already use on
+    disk, so dropping the cap lets resume find them instead of orphaning.
+    find_trained_run_dir's truncated-prefix fallback (below) still covers
+    any old capped dirs that predate this fix.
+    """
+    return Path(data_dir).resolve().name
 
 
 def build_run_name(data_dir, model_name, cfg_tag=None):
     """Return <dataset>_<model_stem>[_<cfg_tag>] for the run directory.
-    Dataset name is capped at 15 chars for readability (full name is still
-    in bench_manifest.json). A child wrapper launched by the orchestrator
-    inherits the exact run name via the BENCH_RUN_NAME env var, so parent
-    and child always agree on the dir."""
+    A child wrapper launched by the orchestrator inherits the exact run
+    name via the BENCH_RUN_NAME env var, so parent and child always agree
+    on the dir."""
     override = os.environ.get("BENCH_RUN_NAME")
     if override:
         return override
-    ds_name = Path(data_dir).resolve().name[:15]
+    ds_name = _ds_run_token(data_dir)
     raw = f"{ds_name}_{Path(model_name).stem}"
     if cfg_tag:
         raw = f"{raw}_{cfg_tag}"
@@ -128,27 +148,42 @@ def _dir_has_checkpoints(d: Path) -> bool:
     return any(p for g in _CKPT_GLOBS for p in d.glob(g))
 
 
-def find_trained_run_dir(task, data_dir, model_entry):
+def find_trained_run_dir(task, data_dir, model_entry, args=None):
     """When --inference_only, scan for an existing trained run dir whose
     dataset + model stem match, sorted by checkpoint count (newest-ckpt
-    mtime breaks ties). Matches by dir-name prefix — no manifest parsing.
+    mtime breaks ties).
+
+    Two-stage match: exact dataset-name prefix first (post-[:15] fix), then
+    a truncated 15-char prefix fallback so old capped dirs still resolve.
+    If ``args`` is supplied, every candidate is manifest-validated against
+    the requested config (epochs/imgsz/aug_policy/aug_grid/batch_effective/
+    run_tag/seg_head) via _config_mismatch; a candidate whose manifest
+    differs or is unreadable is skipped, so an inference-only pass can no
+    longer silently score a different config's checkpoint. With no ``args``,
+    keeps the legacy prefix+mtime heuristic (no manifest validation).
 
     Returns the resolved run_name, or None if no trained dir is found."""
     runs_root = HOME_BENCH / "runs" / task
     if not runs_root.is_dir():
         return None
-    prefix = f"{Path(data_dir).resolve().name[:15]}_{Path(model_entry).stem}_"
+    full_name = Path(data_dir).resolve().name
+    model_stem = Path(model_entry).stem
+    prefixes = [f"{full_name}_{model_stem}_", f"{full_name[:15]}_{model_stem}_"]
     best = None
     best_score = (-1, -1)
     for d in runs_root.iterdir():
-        if not d.is_dir() or not d.name.startswith(prefix):
+        if not d.is_dir() or not d.name.startswith(tuple(prefixes)):
             continue
         ckpts = [p for g in _CKPT_GLOBS for p in d.glob(g)]
-        n = len(ckpts)
-        if n == 0:
+        if not ckpts:
+            continue
+        # When the caller supplied a requested config, reject any candidate
+        # whose manifest config differs — a different aug_policy/epochs/etc.
+        # is a different run, not a fallback for this one.
+        if args is not None and _config_mismatch(d, args):
             continue
         newest = max(p.stat().st_mtime for p in ckpts)
-        score = (n, newest)
+        score = (len(ckpts), newest)
         if score > best_score:
             best_score = score
             best = d.name
@@ -167,7 +202,7 @@ def harvest_results_csv(task, run_name):
             # Optional per-model batch bookkeeping the wrapper may report back.
             # Only honour non-empty, numeric values so a blank column cannot
             # silently override the orchestrator-resolved batch.
-            for k in RUN_BATCH_KEYS:
+            for k in RUN_BATCH_KEYS + RUN_STOP_KEYS:
                 raw = last.get(k)
                 if raw is None or str(raw).strip() == "":
                     continue
@@ -398,6 +433,14 @@ def _quiet_child_env(env):
 
 
 def _clear_stale_outputs(run_dir):
+    """Delete the two bookkeeping files a fresh run must not inherit.
+
+    This must never grow to cover prediction artefacts. A predictions*.json is the
+    only surviving record of a training run's output — it encodes GPU-months and is
+    the sole input to the counting and difficulty analyses, which are re-run against
+    it long after the checkpoints are gone. Bookkeeping is regenerable; predictions
+    are not. Preservation of those lives in _preserve_prediction_artefacts().
+    """
     for stale_name in ("results.csv", "UNSUPPORTED.txt"):
         stale = run_dir / stale_name
         if stale.exists():
@@ -405,6 +448,149 @@ def _clear_stale_outputs(run_dir):
                 stale.unlink()
             except Exception:
                 pass
+
+
+def _drop_superseded(paths):
+    """Filter out artefacts parked by _preserve_prediction_artefacts().
+
+    Every rglob over a run_dir must go through this, or a fresh run gets scored
+    against the predictions of the run it replaced.
+    """
+    return [p for p in paths
+            if not any(part.startswith("_superseded_") for part in p.parts)]
+
+
+_CONFIG_MISMATCH_KEYS = ("epochs", "imgsz", "aug_policy", "aug_grid",
+                        "batch_effective", "run_tag", "seg_head")
+
+
+def _norm_cfg_value(k, v):
+    """Normalize one config value for _config_mismatch comparison.
+
+    `data` (the dataset path) is compared by its RESOLVED absolute path, so a
+    run launched against `/mnt/.../african-penguin-inaturalist-sam-veryclean`
+    is a mismatch against a dir whose manifest recorded `/mnt/.../african-penguin`
+    even if every other knob matched. This closes R.1's residual blind spot:
+    `build_run_name` already uses the full dataset name (no [:15] cap), but the
+    mismatch gate never compared the dataset, so two same-name datasets or a
+    stale legacy dir would not park. None/missing both normalize to "" so a
+    genuine resume (manifest + args agree) is not false-parked.
+    """
+    if v is None:
+        return ""
+    if k == "data":
+        try:
+            return str(Path(v).resolve())
+        except Exception:
+            return str(v)
+    return str(v)
+
+
+def _config_mismatch(run_dir, args):
+    """True iff the run_dir's bench_manifest.json records a different config.
+
+    A config mismatch is the real "fresh run into an occupied dir" case where
+    parking matters: a sweep cell that lands in a name-colliding dir (a stale
+    legacy [:15]-capped dir, or two datasets that share a name) would overwrite
+    a prior run's artefacts in place. `build_run_name` already uses the full
+    dataset name so the dir itself rarely collides, but the mismatch gate also
+    compares the dataset path (`data`) so a same-knob run against a different
+    dataset still parks. An identical config (a genuine resume or a same-config
+    re-eval) owns its dir and must NOT park, or resume re-dumps its own
+    predictions into _superseded_ and loses them from harvest.
+    Missing/unreadable manifest → treat as mismatch (park, safest default).
+    """
+    import json
+    mf = run_dir / "bench_manifest.json"
+    if not mf.is_file():
+        return True
+    try:
+        with open(mf) as fh:
+            prior = json.load(fh).get("args", {})
+    except Exception:
+        return True
+    for k in _CONFIG_MISMATCH_KEYS:
+        cur = getattr(args, k, None)
+        old = prior.get(k)
+        if _norm_cfg_value(k, cur) != _norm_cfg_value(k, old):
+            return True
+    # `data` is outside _CONFIG_MISMATCH_KEYS (orchestrator-only, not a wrapper
+    # knob) but is the load-bearing identity for R.1: compare it here so a
+    # different dataset with identical training knobs still parks.
+    if _norm_cfg_value("data", getattr(args, "data", None)) != \
+       _norm_cfg_value("data", prior.get("data")):
+        return True
+    return False
+
+
+def _preserve_prediction_artefacts(run_dir):
+    """Move existing prediction artefacts aside so a fresh run cannot overwrite them.
+
+    Fires only on a from-scratch launch into a run_dir that already holds output —
+    a resume owns its own dir and re-dumps the same run's predictions. Files are
+    moved, never deleted, into _superseded_<timestamp>/ preserving their relative
+    layout. Failures are reported and swallowed: an overnight chain must not die at
+    this gate.
+    """
+    if not run_dir.exists():
+        return
+    doomed = _drop_superseded(list(run_dir.rglob("predictions*.json"))
+                              + list(run_dir.rglob("_bench_predictions_*.json"))
+                              + list(run_dir.rglob("*gt_coco.json"))
+                              + list(run_dir.glob("bench_manifest.json")))
+    if not doomed:
+        return
+    dest = run_dir / f"_superseded_{time.strftime('%Y-%m-%d_%H%M%S')}"
+    kept = 0
+    for src in doomed:
+        try:
+            target = dest / src.relative_to(run_dir)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            src.replace(target)
+            kept += 1
+        except Exception as exc:
+            print(f"[bench] ⚠️ could not preserve {src.name}: {exc}")
+    if kept:
+        print(f"[bench] preserved {kept} prediction artefact(s) → {dest}")
+
+
+def _preserve_weights_and_history(run_dir):
+    """Move weights/, graphs/, and per-epoch history aside (R.3b).
+
+    _preserve_prediction_artefacts covers the prediction JSONs the counting and
+    difficulty analyses need; this covers the training artefacts Figure 1 and
+    the per-epoch curves need (best_model/, weights/, graphs/, mAP75_history.csv,
+    results_ultra.csv). A from-scratch launch that overwrites these via a
+    copytree merge loses the per-epoch trace — 5 YOLO dirs lost their
+    mAP75_history.csv this way. Only fires alongside a prediction park (a
+    config-mismatch launch), never on a genuine resume.
+    """
+    if not run_dir.exists():
+        return
+    targets = []
+    for sub in ("best_model", "weights", "graphs"):
+        d = run_dir / sub
+        if d.is_dir():
+            targets.append(d)
+    for stem in ("mAP75_history.csv", "results_ultra.csv"):
+        f = run_dir / stem
+        if f.is_file():
+            targets.append(f)
+    targets = _drop_superseded(targets)
+    if not targets:
+        return
+    dest = run_dir / f"_superseded_{time.strftime('%Y-%m-%d_%H%M%S')}"
+    kept = 0
+    for src in targets:
+        try:
+            target = dest / src.relative_to(run_dir)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            src.replace(target)
+            kept += 1
+        except Exception as exc:
+            print(f"[bench] ⚠️ could not preserve {src.name}: {exc}")
+    if kept:
+        print(f"[bench] preserved {kept} weight/graph artefact(s) → {dest}")
 
 
 def _summary_groups(rows):
@@ -596,11 +782,11 @@ def main():
                          "rows (--run_tag seedN) aggregate to mean ± std.")
     ap.add_argument("--sam2_ckpt",
                     default=os.environ.get("SAM2_CKPT",
-                                           "/home/vorse/sam2/checkpoints/sam2.1_hiera_large.pt"),
+                                           "/home/user/sam2/checkpoints/sam2.1_hiera_large.pt"),
                     help="Path to a SAM2 .pt checkpoint (default: sam2.1_hiera_large.pt).")
     ap.add_argument("--sam2_config",
                     default=os.environ.get("SAM2_CONFIG",
-                                           "/home/vorse/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml"),
+                                           "/home/user/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml"),
                     help="SAM2 hydra config (default: sam2.1_hiera_l.yaml).")
     ap.add_argument("--verbose", action='store_true', help="Don't suppress upstream tqdm/HF banners.")
     # Resume is ON by default across all wrappers: every *_any_tune.py accepts --resume
@@ -611,6 +797,14 @@ def main():
                     help="Forward --resume to every sub-tuner so interrupted runs continue from the last "
                          "checkpoint. Use --no-resume to start fresh (clears stale results.csv).")
     args = ap.parse_args()
+    _RESERVED_AUG_TOKENS = ("native", "off", "fair", "grid")
+    run_tag = (args.run_tag or "").strip()
+    if run_tag and run_tag in _RESERVED_AUG_TOKENS:
+        ap.error(
+            f"--run_tag {run_tag!r} collides with a reserved aug-policy token "
+            f"{_RESERVED_AUG_TOKENS}; a free-text tag must not impersonate an "
+            "aug policy (R.4)."
+        )
     if args.list_models:
         print("\n".join(registry_lines()))
         return
@@ -700,7 +894,7 @@ def main():
                 run_name = exact_name
                 print(f"[bench] inference-only: resolved trained run dir {run_name} (exact match)")
             else:
-                trained_run = find_trained_run_dir(task, data_dir, entry)
+                trained_run = find_trained_run_dir(task, data_dir, entry, args)
                 if trained_run:
                     run_name = trained_run
                     print(f"[bench] inference-only: resolved trained run dir {run_name}")
@@ -804,6 +998,28 @@ def main():
         env = os.environ.copy()
         env["WANDB_PROJECT"] = project_for(route_entry.lower())
         env["WANDB_NAME"] = run_name
+        # Ultralytics builds its W&B run id as f"{trainer.args.name}_{timestamp}"
+        # (wb.py:142), and every logged curve becomes an artifact named
+        # f"run-{run.id}-{key}". W&B rejects artifact names over 128 characters
+        # from inside on_train_end, which discards a finished run's weights.
+        # Budget, worst case: 128 - 4 ("run-") - 1 ("-") - 33 for the sanitised
+        # key "curvesPrecision-ConfidenceB_table" - 7 CRC suffix - 16 for
+        # "_YYYYmmdd_HHMMSS" = 67. Measured the same way: an id of 83 lands on
+        # 128 exactly, less the 16-char stamp. "Precision-Confidence(B)" is the
+        # longest curve label in DetMetrics, SegmentMetrics and PoseMetrics
+        # alike, so the bound is task-independent. Shortening the run name is
+        # not an option: it is also the run directory name. Drop the W&B logging
+        # instead, which costs a dashboard and saves the weights. An already-set
+        # WANDB_MODE does not exempt the run, because offline mode still builds
+        # and validates artifact names. Wrappers invoked directly, without the
+        # orchestrator, are not covered.
+        if (name in ("yolo", "rtdetr", "rtdetr_external")
+                and len(run_name) > 67
+                and env.get("WANDB_MODE") != "disabled"):
+            env["WANDB_MODE"] = "disabled"
+            print(f"[bench] ⚠️ {entry}: run name is {len(run_name)} characters, "
+                  f"over the 67 W&B tolerates; logging disabled for this run so "
+                  f"the artifact-name check cannot destroy the trained weights.")
         # Hand the fully-resolved run name (incl. hyperparameter fingerprint) to
         # the child wrapper so its run dir matches what the orchestrator harvests.
         env["BENCH_RUN_NAME"] = run_name
@@ -814,6 +1030,17 @@ def main():
         stale_run_dir = HOME_BENCH / "runs" / task / run_name
         if not args.resume:
             _clear_stale_outputs(stale_run_dir)
+        # Preserve artefacts whenever the target dir holds a DIFFERENT config
+        # (R.3/R.3b). The prior gate skipped this on resume (default True) and
+        # on inference_only, so 3 of 4 combos silently overwrote a prior run's
+        # predictions/weights in place. A genuine resume or same-config re-eval
+        # owns its dir and is NOT parked (config matches → no _superseded_ churn).
+        # Inference-only is orthogonal to clearing: it parks a mismatched dir
+        # just like a from-scratch launch, then the wrapper re-evals the loaded
+        # checkpoint into the now-empty dir.
+        if stale_run_dir.exists() and _config_mismatch(stale_run_dir, args):
+            _preserve_prediction_artefacts(stale_run_dir)
+            _preserve_weights_and_history(stale_run_dir)
 
         if not args.verbose:
             _quiet_child_env(env)
@@ -841,6 +1068,14 @@ def main():
             nonzero = ""
         else:
             m = raw_metrics
+            # R.5: on a failed subprocess (rc != 0) the harvested last row can
+            # carry stale non-zero metrics from a prior epoch. Zero the scored
+            # columns (box_*/seg_*/sam2_*) so partial_rc_N never publishes stale
+            # metrics; perf/support/difficulty columns stay so the run is still
+            # identifiable. The rc == 0 path is unchanged.
+            if rc != 0:
+                for k in SCORE_KEYS:
+                    m[k] = 0.0
             nonzero = _format_nonzero_metrics(m)
         # Inject dataset support (computed once, identical for every row).
         m["n_images"] = float(n_images)
@@ -949,15 +1184,17 @@ def main():
                     return (fixed, 0 if in_split else 1, len(p.parts), name)
 
                 _gt_cands = sorted(
-                    list(run_dir_path.rglob("_bench_gt_coco.json"))
-                    + list(run_dir_path.rglob("instances_*.json"))
-                    + list(run_dir_path.rglob("*gt*coco*.json")),
+                    _drop_superseded(
+                        list(run_dir_path.rglob("_bench_gt_coco.json"))
+                        + list(run_dir_path.rglob("instances_*.json"))
+                        + list(run_dir_path.rglob("*gt*coco*.json"))),
                     key=_rank,
                 )
                 _pred_cands = sorted(
-                    list(run_dir_path.rglob("predictions*.json"))
-                    + list(run_dir_path.rglob("_bench_predictions_*.json"))
-                    + list(run_dir_path.rglob("*pred*coco*.json")),
+                    _drop_superseded(
+                        list(run_dir_path.rglob("predictions*.json"))
+                        + list(run_dir_path.rglob("_bench_predictions_*.json"))
+                        + list(run_dir_path.rglob("*pred*coco*.json"))),
                     key=_rank,
                 )
                 # Dedup while preserving rank order.

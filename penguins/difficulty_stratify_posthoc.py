@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """
 Standalone post-hoc difficulty-stratified eval over FROZEN run dirs.
 =====================================================================
@@ -111,10 +112,14 @@ DEFAULT_TAGS: List[str] = [
 ]
 
 # NMS-free flag per paradigm family, keyed by a prefix of the model_tag.
-# Verbatim from tab:cross: YOLOv11s/l-seg = No; RT-DETR, RF-DETR-Seg, EoMT,
-# DINOv3-Mask2Former = Yes. Match by longest-prefix first so "yolo11x-seg"
-# and "yolo26x-seg" both hit the "yolo" rule.
+# Taken from each model's own config, NOT from tab:cross -- reading the flag off
+# the paper made it circular. YOLOv11 runs suppression; YOLOv26 does not, because
+# ultralytics/cfg/models/26/yolo26-seg.yaml sets ``end2end: True``. RT-DETR,
+# RF-DETR-Seg, EoMT and DINOv3-Mask2Former are all query- or mask-based and
+# suppression-free. Match by longest-prefix first, so the "yolo26" rule is
+# reached before the "yolo" one.
 NMS_FREE_PREFIXES: List[Tuple[str, bool]] = [
+    ("yolo26",  True),    # NMS-free one-stage (end2end: True)
     ("yolo",    False),   # NMS-based one-stage
     ("rtdetr",  True),    # NMS-free query-based
     ("rf-detr", True),    # NMS-free
@@ -501,18 +506,39 @@ def main(argv: Optional[List[str]] = None) -> int:
                     help="output CSV path (default difficulty_stratified_125e.csv)")
     ap.add_argument("--no-summary", action="store_true",
                     help="suppress the stdout tab:cross-style summary")
+    ap.add_argument("--run-dir", nargs="+", default=None, metavar="TAG=PATH",
+                    help="explicit run dirs as tag=path pairs; bypasses "
+                         "discovery for the named tags (e.g. "
+                         "dinov3-m2f-vith16plus=/path/to/run_dir). Useful "
+                         "when discovery's highest-epoch heuristic picks the "
+                         "wrong run for a tag with multiple dirs.")
     args = ap.parse_args(argv)
 
     runs_root = Path(args.runs_root).expanduser()
-    if not runs_root.is_dir():
+    if not runs_root.is_dir() and not args.run_dir:
         print(f"[stratify] runs root not found: {runs_root}", file=sys.stderr)
         return 2
 
-    discovered = discover_run_dirs(runs_root, args.model_tags)
-    if not discovered:
+    discovered = discover_run_dirs(runs_root, args.model_tags) if runs_root.is_dir() else {}
+    if not discovered and not args.run_dir:
         print(f"[stratify] no run dirs matching any of {args.model_tags} "
               f"under {runs_root}", file=sys.stderr)
         return 3
+
+    # --run-dir overrides: explicit tag=path pairs bypass discovery for named tags.
+    if args.run_dir:
+        for spec in args.run_dir:
+            if "=" not in spec:
+                print(f"[stratify] bad --run-dir '{spec}' (expected TAG=PATH)",
+                      file=sys.stderr)
+                return 2
+            otag, opath = spec.split("=", 1)
+            odir = Path(opath).expanduser()
+            if not odir.is_dir():
+                print(f"[stratify] --run-dir path not found: {odir}",
+                      file=sys.stderr)
+                return 2
+            discovered[otag] = odir
 
     print(f"[stratify] {len(discovered)}/{len(args.model_tags)} tags found:")
     for tag, rd in discovered.items():

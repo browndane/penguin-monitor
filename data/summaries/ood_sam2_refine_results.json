@@ -1,0 +1,130 @@
+{
+ "boulders": {
+  "rf-detr-seg-xlarge": {
+   "control_reproduced": true,
+   "published_agg": 75.20367758136375,
+   "control_agg": 75.20367758136375,
+   "sam2_agg": 75.13387553235815,
+   "published_tiers": {
+    "easy": 98.25099005696872,
+    "medium": 88.7634905594729,
+    "hard": 38.59655212764961
+   },
+   "sam2_tiers": {
+    "easy": 98.25431536114307,
+    "medium": 88.68885444387094,
+    "hard": 38.45845679206045
+   },
+   "published_recall": 0.9571,
+   "sam2_recall": 0.9584
+  },
+  "rf-detr-seg-large": {
+   "control_reproduced": true,
+   "published_agg": 73.90249436021797,
+   "control_agg": 73.90249436021797,
+   "sam2_agg": 74.07088000406593,
+   "published_tiers": {
+    "easy": 98.43625595867933,
+    "medium": 88.61437545948536,
+    "hard": 34.656851662489224
+   },
+   "sam2_tiers": {
+    "easy": 98.45678850164963,
+    "medium": 88.49072859738712,
+    "hard": 35.26512291316101
+   },
+   "published_recall": 0.9506,
+   "sam2_recall": 0.9532
+  },
+  "rtdetr-4": {
+   "control_reproduced": true,
+   "published_agg": 65.9943155590454,
+   "control_agg": 65.9943155590454,
+   "sam2_agg": 53.311028815706514,
+   "published_tiers": {
+    "easy": 97.83683470907661,
+    "medium": 82.34780326180906,
+    "hard": 17.79830870625057
+   },
+   "sam2_tiers": {
+    "easy": 85.62833270607787,
+    "medium": 65.48572750852148,
+    "hard": 8.819026232520159
+   },
+   "published_recall": 0.922,
+   "sam2_recall": 0.8908
+  },
+  "rtdetr-3": {
+   "control_reproduced": true,
+   "published_agg": 66.7908411508966,
+   "control_agg": 66.7908411508966,
+   "sam2_agg": 46.8871592017978,
+   "published_tiers": {
+    "easy": 97.97707774100529,
+    "medium": 84.57079507144152,
+    "hard": 17.824650640242965
+   },
+   "sam2_tiers": {
+    "easy": 77.6587691191797,
+    "medium": 59.778946109976076,
+    "hard": 3.223762376237624
+   },
+   "published_recall": 0.9168,
+   "sam2_recall": 0.8388
+  },
+  "eomt-large": {
+   "control_reproduced": true,
+   "published_agg": 70.80816135102855,
+   "control_agg": 70.80816135102855,
+   "sam2_agg": 70.59824047538403,
+   "published_tiers": {
+    "easy": 97.02953626283008,
+    "medium": 83.56973378873224,
+    "hard": 31.825214001523307
+   },
+   "sam2_tiers": {
+    "easy": 97.01626251681962,
+    "medium": 82.91889907668613,
+    "hard": 31.859559832646312
+   },
+   "published_recall": 0.8908,
+   "sam2_recall": 0.8921
+  },
+  "yolo11x-seg": {
+   "control_reproduced": true,
+   "published_agg": 47.865093647017716,
+   "control_agg": 47.865093647017716,
+   "sam2_agg": 71.76557927732055,
+   "published_tiers": {
+    "easy": 84.16409624280928,
+    "medium": 49.98435847752771,
+    "hard": 9.446826220716172
+   },
+   "sam2_tiers": {
+    "easy": 97.24335174420476,
+    "medium": 84.6520977354436,
+    "hard": 33.401288352313294
+   },
+   "published_recall": 0.6931,
+   "sam2_recall": 0.9194
+  },
+  "yolo11x-seg-native": {
+   "control_reproduced": true,
+   "published_agg": 62.20266395480775,
+   "control_agg": 62.20266395480775,
+   "sam2_agg": 69.46777549604582,
+   "published_tiers": {
+    "easy": 97.59687411243696,
+    "medium": 75.32138113126535,
+    "hard": 13.689736620720897
+   },
+   "sam2_tiers": {
+    "easy": 97.72328570177466,
+    "medium": 86.3288920047313,
+    "hard": 24.351148781631483
+   },
+   "published_recall": 0.8635,
+   "sam2_recall": 0.9415
+  }
+ }
+}

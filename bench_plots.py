@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # Shared, framework-agnostic paper-figure utilities for bench_any.
 #
 # Every non-Ultralytics tuner appends one epoch row to history.csv via
@@ -679,7 +680,12 @@ def _ultra_results_to_history(results_csv: Path) -> list[dict]:
         vl = [v for v in (gf("val/box_loss"), gf("val/cls_loss"),
                           gf("val/dfl_loss"), gf("val/seg_loss"))
               if v is not None]
-        ep_int = int(float(r.get("epoch") or len(out) + 1))
+        # Only join the sidecar when this row carries a real epoch number.
+        # The bench's own single-row harvest has no epoch column, and falling
+        # back to a positional index there joined it to epoch 1 and reported
+        # the first epoch's metrics as the run's history.
+        has_epoch = r.get("epoch") not in (None, "")
+        ep_int = int(float(r["epoch"])) if has_epoch else len(out) + 1
         row = {
             "epoch": ep_int,
             "elapsed_s": gf("time"),
@@ -692,7 +698,7 @@ def _ultra_results_to_history(results_csv: Path) -> list[dict]:
             "seg_mAP50_95": gf("metrics/mAP50-95(M)"),
         }
         # Merge per-epoch mAP75 (and override mAP50_95 if sidecar provides it).
-        side_r = sidecar_by_ep.get(ep_int)
+        side_r = sidecar_by_ep.get(ep_int) if has_epoch else None
         if side_r:
             for k in ("box_mAP75", "seg_mAP75", "box_mAP50_95", "seg_mAP50_95",
                       "box_mAP50", "seg_mAP50"):
@@ -703,6 +709,23 @@ def _ultra_results_to_history(results_csv: Path) -> list[dict]:
                     except (TypeError, ValueError):
                         pass
         out.append(row)
+    # The bench harvest overwrites Ultralytics' native results.csv in the run
+    # directory, so the only surviving per-epoch trace is the sidecar. Drive
+    # the history from it whenever it is the longer of the two.
+    if len(sidecar_by_ep) > len(out):
+        out = []
+        for ep_s in sorted(sidecar_by_ep):
+            rs = sidecar_by_ep[ep_s]
+            row = {"epoch": ep_s}
+            for k in ("box_mAP50", "box_mAP75", "box_mAP50_95",
+                      "seg_mAP50", "seg_mAP75", "seg_mAP50_95"):
+                v = rs.get(k)
+                if v not in (None, ""):
+                    try:
+                        row[k] = float(v)
+                    except (TypeError, ValueError):
+                        pass
+            out.append(row)
     return out
 
 
@@ -1435,7 +1458,6 @@ def _tier_grouped_bar(ax, rows, tiers) -> None:
 
 def _pareto_scatter(ax, fps_rows) -> None:
     """FPS-vs-mAP scatter with model labels + Pareto-frontier highlight."""
-    import numpy as np
     # Aggregate by model_tag (mean of fps, mean of map) for multi-seed rollup.
     groups: Dict[str, list] = {}
     for tag, fps, mAP in fps_rows:
@@ -1445,12 +1467,11 @@ def _pareto_scatter(ax, fps_rows) -> None:
         fps = sum(v[0] for v in vals) / len(vals)
         mAP = sum(v[1] for v in vals) / len(vals)
         pts.append((tag, fps, mAP))
-    pts.sort(key=lambda p: -p[1])  # by mAP desc
+    pts.sort(key=lambda p: -p[1])  # by fps desc (p[1] is fps; affects label draw order only)
     # Pareto front: points where no other point has both higher fps and higher mAP.
     pareto = []
-    for i, (tag, fps, mAP) in enumerate(pts):
-        dominated = any(p[1] >= fps and p[2] > mAP and p is not pt for p, pt in zip(pts, pts))
-        # Simpler: a point is Pareto if no other has fps>= and mAP>= with one strictly >.
+    for tag, fps, mAP in pts:
+        # A point is Pareto if no other has fps>= and mAP>= with one strictly >.
         on_front = not any(other[1] >= fps and other[2] >= mAP and
                            (other[1] > fps or other[2] > mAP)
                            for other in pts if other[0] != tag)

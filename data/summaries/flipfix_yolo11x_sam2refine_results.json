@@ -1,0 +1,22 @@
+{
+ "boulders": {
+  "yolo11x-seg": {
+   "control_reproduced": true,
+   "published_agg": 64.66099799152171,
+   "control_agg": 64.66099799152171,
+   "sam2_agg": 70.70472462339805,
+   "published_tiers": {
+    "easy": 98.05659662361917,
+    "medium": 76.428786322465,
+    "hard": 19.497611028480943
+   },
+   "sam2_tiers": {
+    "easy": 98.19424861774681,
+    "medium": 85.74502231728923,
+    "hard": 28.17490293515812
+   },
+   "published_recall": 0.8583,
+   "sam2_recall": 0.9311
+  }
+ }
+}

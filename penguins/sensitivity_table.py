@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Build the Obj-2 prompt-sensitivity table. CPU, self-reporting.
 
 3 corpora (iNat test, Boulders, SANParks) x 7 configs (6 single prompts + union).

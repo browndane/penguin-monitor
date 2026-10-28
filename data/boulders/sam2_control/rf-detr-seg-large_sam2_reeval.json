@@ -1,0 +1,18 @@
+{
+ "ckpt_tag": "rf-detr-seg-large_sam2",
+ "corpus": "boulders",
+ "easy": 98.45678850164963,
+ "medium": 88.49072859738712,
+ "hard": 35.26512291316101,
+ "agg": 74.07088000406593,
+ "agg_iw": 89.05809927351555,
+ "n_gt_per_tier": {
+  "easy": 204,
+  "medium": 535,
+  "hard": 30
+ },
+ "tiers_file": "",
+ "recall": 0.9532,
+ "paper_in_dist_mAP50": null,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of the tiers that carry gold instances"
+}

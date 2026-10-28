@@ -1,0 +1,112 @@
+{
+ "corpus": "pw-v2-200",
+ "clicks_available": false,
+ "runs": {
+  "chosen_128": {
+   "config": {
+    "a_min": 128.0,
+    "rho_max": 1.0,
+    "border": 4.0,
+    "area_k": 0.0,
+    "nms_iou": 0.8,
+    "score_floor": 0.25,
+    "tau_bypass": 0.5,
+    "match_iou": 0.5
+   },
+   "totals": {
+    "raw": 3952,
+    "floored": 3952,
+    "kept": 3852,
+    "tp": 3054,
+    "fp": 798,
+    "fp_below_tau": 451,
+    "kept_above_tau": 3322,
+    "presieve_tp": 3054,
+    "presieve_fp": 898,
+    "presieve_fp_below_tau": 544
+   },
+   "max_removable_fp_fraction_post_sieve": 0.5651629072681704,
+   "max_removable_fp_fraction_pre_sieve": 0.6057906458797327,
+   "sieve_dropped_fp": 100,
+   "max_removable_fp_fraction_sieve_plus_filter": 0.6135857461024499,
+   "bypass_eligible_share_of_kept": 0.8624091381100727,
+   "per_tier_true_positives": {
+    "easy": {
+     "tp": 203,
+     "tp_above_tau": 203,
+     "bypass_eligible_share": 1.0
+    },
+    "hard": {
+     "tp": 74,
+     "tp_above_tau": 62,
+     "bypass_eligible_share": 0.8378378378378378
+    },
+    "medium": {
+     "tp": 2755,
+     "tp_above_tau": 2702,
+     "bypass_eligible_share": 0.9807622504537206
+    },
+    "unassigned": {
+     "tp": 22,
+     "tp_above_tau": 8,
+     "bypass_eligible_share": 0.36363636363636365
+    }
+   }
+  },
+  "asrun_64": {
+   "config": {
+    "a_min": 64.0,
+    "rho_max": 1.0,
+    "border": 4.0,
+    "area_k": 0.0,
+    "nms_iou": 0.8,
+    "score_floor": 0.25,
+    "tau_bypass": 0.5,
+    "match_iou": 0.5
+   },
+   "totals": {
+    "raw": 3952,
+    "floored": 3952,
+    "kept": 3897,
+    "tp": 3054,
+    "fp": 843,
+    "fp_below_tau": 492,
+    "kept_above_tau": 3326,
+    "presieve_tp": 3054,
+    "presieve_fp": 898,
+    "presieve_fp_below_tau": 544
+   },
+   "max_removable_fp_fraction_post_sieve": 0.5836298932384342,
+   "max_removable_fp_fraction_pre_sieve": 0.6057906458797327,
+   "sieve_dropped_fp": 55,
+   "max_removable_fp_fraction_sieve_plus_filter": 0.60913140311804,
+   "bypass_eligible_share_of_kept": 0.8534770336156018,
+   "per_tier_true_positives": {
+    "easy": {
+     "tp": 203,
+     "tp_above_tau": 203,
+     "bypass_eligible_share": 1.0
+    },
+    "hard": {
+     "tp": 74,
+     "tp_above_tau": 62,
+     "bypass_eligible_share": 0.8378378378378378
+    },
+    "medium": {
+     "tp": 2755,
+     "tp_above_tau": 2702,
+     "bypass_eligible_share": 0.9807622504537206
+    },
+    "unassigned": {
+     "tp": 22,
+     "tp_above_tau": 8,
+     "bypass_eligible_share": 0.36363636363636365
+    }
+   }
+  }
+ },
+ "published_claims": {
+  "fp_removed": 0.71,
+  "bypass_share_of_kept": 0.11
+ }
+}

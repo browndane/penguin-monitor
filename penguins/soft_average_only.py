@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Run ONLY the soft_average strategy from the fusion sweep, in parallel.
 
 Companion to fusion_strategies_sweep.py. The in-flight sweep (PID 446674) baked

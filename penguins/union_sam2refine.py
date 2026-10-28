@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """SAM 2 refinement on the prompt-union boxes, gold corpora. Self-reporting.
 
 Builds the union of "penguin" + "a penguin" boxes at thr 0.40, sieve + NMS
@@ -25,8 +26,8 @@ D = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin")
 CORPORA = {"boulders-penguin": ("Boulders", str(D / "boulders-penguin" / "train" / "images")),
            "sanparks-algoa": ("SANParks", str(D / "sanparks-algoa" / "train" / "images"))}
 THR = 0.40
-CK = "/home/vorse/sam2/checkpoints/checkpoints/sam2.1_hiera_large.pt"
-CFG = "/home/vorse/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml"
+CK = "/home/user/sam2/checkpoints/checkpoints/sam2.1_hiera_large.pt"
+CFG = "/home/user/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml"
 FINDINGS = RUNS / "FINDINGS.md"
 SENTINEL = RUNS / "_union_sam2refine_done"
 

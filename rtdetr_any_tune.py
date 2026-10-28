@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # USAGE (Train):       python3 rtdetr_any_tune.py --data /path/to/dataset --epochs 100 --batch_sz 8 --model rtdetr-x.pt
 # USAGE (Resume):      python3 rtdetr_any_tune.py --data /path/to/dataset --resume
 # USAGE (Tune+Train):  python3 rtdetr_any_tune.py --data /path/to/dataset --tune --tune_iter 10 --epochs 20
@@ -11,9 +12,13 @@ from ultralytics import RTDETR
 from pathlib import Path
 from bench_schema import zero_metrics
 
-import ray
-from ray import tune
-from ray.tune.search.optuna import OptunaSearch
+# Ray is only reachable on the --tune path, so it is imported there. A top-level
+# import kills every plain training run in a venv without a ray wheel.
+def _load_ray():
+    global ray, tune, OptunaSearch
+    import ray
+    from ray import tune
+    from ray.tune.search.optuna import OptunaSearch
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -189,6 +194,7 @@ if __name__ == "__main__":
 
     # Tune
     if args.tune:
+        _load_ray()
         def train_objective(tune_config):
             m = RTDETR(args.model)
             m.train(
@@ -256,8 +262,11 @@ if __name__ == "__main__":
                 # has no last.pt yet. Don't abort (that made rtdetr entries exit
                 # instantly with rc=1 so a later model looked like it "ran
                 # first"); just start training from the pretrained weights.
-                print("ℹ️ Resume requested but no checkpoint yet; starting a fresh run.")
+                print("ℹ Resume requested but no checkpoint yet; starting a fresh run.")
         model = RTDETR(model_path_to_use)
+        # `--threads 0` means auto, not "no workers" (see yolo_any_tune.py). -1
+        # forces single-process. cvBench speed port.
+        WORKERS = 0 if args.threads < 0 else (args.threads or min(8, os.cpu_count() or 8))
         # Bench: per-epoch mAP75/mAP50_95 sidecar for paper-figure history.csv.
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -269,7 +278,7 @@ if __name__ == "__main__":
             data=ACTIVE_DATA_YAML, project=os.path.join(ACTIVE_ROOT_DIR, 'runs', TASK),
             name=RUN_NAME, exist_ok=True, task=TASK, optimizer=args.opti,
             imgsz=args.imgsz, epochs=args.epochs, patience=args.patience,
-            batch=BATCH_SIZE, lr0=args.lr, lrf=args.lrf, workers=args.threads, nbs=args.nbs,
+            batch=BATCH_SIZE, lr0=args.lr, lrf=args.lrf, workers=WORKERS, nbs=args.nbs,
             cos_lr=args.cos_lr, close_mosaic=min(10, max(1, args.epochs // 30)),
             dropout=args.dropout, weight_decay=args.weight_decay, momentum=args.momentum,
             warmup_momentum=args.warmup_momentum, iou=args.iou,

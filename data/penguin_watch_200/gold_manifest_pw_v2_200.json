@@ -1,0 +1,443 @@
+{
+ "seed": 42,
+ "design": "40 per site, hardness terciles by rank within site, 13/13/14",
+ "annotation_version": "v2",
+ "provenance": "Roboflow user-verified export, data/penguin-watch",
+ "sites": [
+  "DAMOa",
+  "HALFb",
+  "HALFc",
+  "LOCKb",
+  "PETEe"
+ ],
+ "n_images": 200,
+ "n_instances": 3114,
+ "instance_tier_counts": {
+  "easy": 203,
+  "medium": 2815,
+  "hard": 96
+ },
+ "per_site_draw": {
+  "DAMOa": {
+   "t1_easy": [
+    "DAMOa2014a_000008",
+    "DAMOa2014a_000047",
+    "DAMOa2014a_000084",
+    "DAMOa2014a_000142",
+    "DAMOa2014a_000143",
+    "DAMOa2014a_000149",
+    "DAMOa2014a_000184",
+    "DAMOa2014a_000201",
+    "DAMOa2014a_000221",
+    "DAMOa2014a_000222",
+    "DAMOa2014a_000320",
+    "DAMOa2014a_000323",
+    "DAMOa2014a_000362"
+   ],
+   "t2_medium": [
+    "DAMOa2014a_000088",
+    "DAMOa2014a_000091",
+    "DAMOa2014a_000132",
+    "DAMOa2014a_000148",
+    "DAMOa2014a_000159",
+    "DAMOa2014a_000196",
+    "DAMOa2014a_000212",
+    "DAMOa2014a_000240",
+    "DAMOa2014a_000265",
+    "DAMOa2014a_000316",
+    "DAMOa2014a_000317",
+    "DAMOa2014a_000319",
+    "DAMOa2014a_000404"
+   ],
+   "t3_hard": [
+    "DAMOa2014a_000019",
+    "DAMOa2014a_000059",
+    "DAMOa2014a_000061",
+    "DAMOa2014a_000071",
+    "DAMOa2014a_000093",
+    "DAMOa2014a_000126",
+    "DAMOa2014a_000130",
+    "DAMOa2014a_000203",
+    "DAMOa2014a_000284",
+    "DAMOa2014a_000297",
+    "DAMOa2014a_000313",
+    "DAMOa2014a_000328",
+    "DAMOa2014a_000345",
+    "DAMOa2014a_000400"
+   ]
+  },
+  "HALFb": {
+   "t1_easy": [
+    "HALFb2013a_000008",
+    "HALFb2013a_000039",
+    "HALFb2013a_000047",
+    "HALFb2013a_000058",
+    "HALFb2013a_000084",
+    "HALFb2013a_000119",
+    "HALFb2013a_000129",
+    "HALFb2013a_000132",
+    "HALFb2013a_000144",
+    "HALFb2013a_000179",
+    "HALFb2013a_000183",
+    "HALFb2013a_000192",
+    "HALFb2013a_000216"
+   ],
+   "t2_medium": [
+    "HALFb2013a_000036",
+    "HALFb2013a_000042",
+    "HALFb2013a_000081",
+    "HALFb2013a_000088",
+    "HALFb2013a_000099",
+    "HALFb2013a_000135",
+    "HALFb2013a_000141",
+    "HALFb2013a_000150",
+    "HALFb2013a_000170",
+    "HALFb2013a_000174",
+    "HALFb2013a_000196",
+    "HALFb2013a_000231",
+    "HALFb2013a_000245"
+   ],
+   "t3_hard": [
+    "HALFb2013a_000103",
+    "HALFb2013a_000124",
+    "HALFb2013a_000155",
+    "HALFb2013a_000167",
+    "HALFb2013a_000169",
+    "HALFb2013a_000172",
+    "HALFb2013a_000200",
+    "HALFb2013a_000202",
+    "HALFb2013a_000229",
+    "HALFb2013a_000248",
+    "HALFb2013a_000273",
+    "HALFb2013a_000281",
+    "HALFb2013a_000294",
+    "HALFb2013a_000305"
+   ]
+  },
+  "HALFc": {
+   "t1_easy": [
+    "HALFc2013a_000015",
+    "HALFc2013a_000018",
+    "HALFc2013a_000032",
+    "HALFc2013a_000065",
+    "HALFc2013a_000104",
+    "HALFc2013a_000105",
+    "HALFc2013a_000115",
+    "HALFc2013a_000117",
+    "HALFc2013a_000139",
+    "HALFc2013a_000154",
+    "HALFc2013a_000179",
+    "HALFc2013a_000253",
+    "HALFc2013a_000274"
+   ],
+   "t2_medium": [
+    "HALFc2013a_000019",
+    "HALFc2013a_000031",
+    "HALFc2013a_000038",
+    "HALFc2013a_000069",
+    "HALFc2013a_000073",
+    "HALFc2013a_000107",
+    "HALFc2013a_000122",
+    "HALFc2013a_000157",
+    "HALFc2013a_000204",
+    "HALFc2013a_000223",
+    "HALFc2013a_000268",
+    "HALFc2013a_000269",
+    "HALFc2013a_000272"
+   ],
+   "t3_hard": [
+    "HALFc2013a_000008",
+    "HALFc2013a_000030",
+    "HALFc2013a_000050",
+    "HALFc2013a_000052",
+    "HALFc2013a_000056",
+    "HALFc2013a_000058",
+    "HALFc2013a_000072",
+    "HALFc2013a_000120",
+    "HALFc2013a_000128",
+    "HALFc2013a_000155",
+    "HALFc2013a_000192",
+    "HALFc2013a_000206",
+    "HALFc2013a_000228",
+    "HALFc2013a_000279"
+   ]
+  },
+  "LOCKb": {
+   "t1_easy": [
+    "LOCKb2013b_000062",
+    "LOCKb2013b_000144",
+    "LOCKb2013b_000152",
+    "LOCKb2013b_000220",
+    "LOCKb2013b_000249",
+    "LOCKb2013b_000356",
+    "LOCKb2013b_000888",
+    "LOCKb2013b_004353",
+    "LOCKb2013b_004744",
+    "LOCKb2013b_004931",
+    "LOCKb2013b_004933",
+    "LOCKb2013b_005047",
+    "LOCKb2013b_005076"
+   ],
+   "t2_medium": [
+    "LOCKb2013a_000011",
+    "LOCKb2013a_000069",
+    "LOCKb2013b_000232",
+    "LOCKb2013b_000527",
+    "LOCKb2013b_000718",
+    "LOCKb2013b_000876",
+    "LOCKb2013b_001699",
+    "LOCKb2013b_004575",
+    "LOCKb2013b_004626",
+    "LOCKb2013b_004714",
+    "LOCKb2013b_004766",
+    "LOCKb2013b_004771",
+    "LOCKb2013b_004786"
+   ],
+   "t3_hard": [
+    "LOCKb2013b_000373",
+    "LOCKb2013b_000617",
+    "LOCKb2013b_000625",
+    "LOCKb2013b_000740",
+    "LOCKb2013b_000781",
+    "LOCKb2013b_001074",
+    "LOCKb2013b_001188",
+    "LOCKb2013b_001837",
+    "LOCKb2013b_003338",
+    "LOCKb2013b_004307",
+    "LOCKb2013b_004409",
+    "LOCKb2013b_004453",
+    "LOCKb2013b_004457",
+    "LOCKb2013b_004497"
+   ]
+  },
+  "PETEe": {
+   "t1_easy": [
+    "PETEe2013a_000101",
+    "PETEe2013b_000074",
+    "PETEe2013b_000108",
+    "PETEe2013b_000140",
+    "PETEe2013b_000205",
+    "PETEe2013b_000394",
+    "PETEe2013b_000473",
+    "PETEe2013b_000998",
+    "PETEe2013b_003460",
+    "PETEe2013b_003472",
+    "PETEe2013b_003515",
+    "PETEe2013b_003553",
+    "PETEe2013b_003598"
+   ],
+   "t2_medium": [
+    "PETEe2013b_000054",
+    "PETEe2013b_000061",
+    "PETEe2013b_000290",
+    "PETEe2013b_000426",
+    "PETEe2013b_000432",
+    "PETEe2013b_000450",
+    "PETEe2013b_003043",
+    "PETEe2013b_003184",
+    "PETEe2013b_003204",
+    "PETEe2013b_003281",
+    "PETEe2013b_003318",
+    "PETEe2013b_003339",
+    "PETEe2013b_003376"
+   ],
+   "t3_hard": [
+    "PETEe2013b_000258",
+    "PETEe2013b_000276",
+    "PETEe2013b_000298",
+    "PETEe2013b_000346",
+    "PETEe2013b_000485",
+    "PETEe2013b_000767",
+    "PETEe2013b_000796",
+    "PETEe2013b_000834",
+    "PETEe2013b_003016",
+    "PETEe2013b_003611",
+    "PETEe2013b_003619",
+    "PETEe2013b_003630",
+    "PETEe2013b_003712",
+    "PETEe2013b_003734"
+   ]
+  }
+ },
+ "per_site_tercile_mean_D_bounds": {
+  "DAMOa": {
+   "t1_easy": [
+    0.38875,
+    0.4537790909090909
+   ],
+   "t2_medium": [
+    0.4540053333333333,
+    0.46746099999999996
+   ],
+   "t3_hard": [
+    0.46799,
+    0.55919
+   ]
+  },
+  "HALFb": {
+   "t1_easy": [
+    0.3693047619047619,
+    0.3822814285714286
+   ],
+   "t2_medium": [
+    0.38233374999999997,
+    0.39017153846153846
+   ],
+   "t3_hard": [
+    0.3902116,
+    0.63295
+   ]
+  },
+  "HALFc": {
+   "t1_easy": [
+    0.3454718181818182,
+    0.3764308333333333
+   ],
+   "t2_medium": [
+    0.3765135714285714,
+    0.38999222222222224
+   ],
+   "t3_hard": [
+    0.3900706666666667,
+    0.42638333333333334
+   ]
+  },
+  "LOCKb": {
+   "t1_easy": [
+    0.2989875,
+    0.38155347826086955
+   ],
+   "t2_medium": [
+    0.381575,
+    0.42599933333333334
+   ],
+   "t3_hard": [
+    0.4262375,
+    0.746705
+   ]
+  },
+  "PETEe": {
+   "t1_easy": [
+    0.4151,
+    0.45206100000000005
+   ],
+   "t2_medium": [
+    0.45211833333333334,
+    0.4870289795918367
+   ],
+   "t3_hard": [
+    0.48723,
+    0.681945
+   ]
+  }
+ },
+ "per_site_pool_size": {
+  "DAMOa": 399,
+  "HALFb": 304,
+  "HALFc": 283,
+  "LOCKb": 2354,
+  "PETEe": 1756
+ },
+ "v1_paired_candidates": [
+  "DAMOa2014a_000130",
+  "DAMOa2014a_000222",
+  "DAMOa2014a_000319",
+  "HALFb2013a_000047",
+  "HALFb2013a_000196",
+  "HALFb2013a_000231",
+  "HALFc2013a_000065",
+  "HALFc2013a_000253",
+  "HALFc2013a_000274",
+  "LOCKb2013b_001188",
+  "LOCKb2013b_004453",
+  "LOCKb2013b_005076",
+  "PETEe2013b_003204",
+  "PETEe2013b_003515",
+  "PETEe2013b_003553"
+ ],
+ "v1_paired_surviving": [
+  "DAMOa2014a_000130",
+  "DAMOa2014a_000222",
+  "DAMOa2014a_000319",
+  "HALFb2013a_000047",
+  "HALFb2013a_000196",
+  "HALFb2013a_000231",
+  "HALFc2013a_000065",
+  "HALFc2013a_000253",
+  "HALFc2013a_000274",
+  "LOCKb2013b_001188",
+  "LOCKb2013b_004453",
+  "LOCKb2013b_005076",
+  "PETEe2013b_003204",
+  "PETEe2013b_003515",
+  "PETEe2013b_003553"
+ ],
+ "v1_test_pw_removed_from_p5_r1_gold": [
+  "PW_MAIVb_MAIVb2013a_001245.jpg",
+  "PW_SPIGa_SPIGa2013b_000809.jpg",
+  "PW_PETEc_PETEc2014a_000312.jpg",
+  "PW_NEKOc_NEKOc2014b_000097.jpg",
+  "PW_NEKOb_NEKOb2013_001561.jpg",
+  "PW_HALFb_HALFb2013a_000196.jpg",
+  "PW_BAILa_BAILa2014a_001073.jpg",
+  "PW_MAIVc_MAIVc2013b_003578.jpg",
+  "PW_PETEd_PETEd2013a_008926.jpg",
+  "PW_LOCKb_LOCKb2013b_001188.jpg",
+  "PW_GEORa_GEORa2013b_000948.jpg",
+  "PW_HALFc_HALFc2013a_000065.jpg",
+  "PW_PETEf_PETEf2014a_000384.jpg",
+  "PW_DAMOa_DAMOa2014a_000222.jpg",
+  "PW_PETEe_PETEe2013b_003515.jpg",
+  "PW_NEKOa_NEKOa2012a_000224.jpg",
+  "PW_MAIVb_MAIVb2013a_003521.jpg",
+  "PW_SPIGa_SPIGa2013b_005075.jpg",
+  "PW_PETEc_PETEc2014a_000734.jpg",
+  "PW_NEKOc_NEKOc2013c_003159.jpg",
+  "PW_NEKOb_NEKOb2013_000206.jpg",
+  "PW_HALFb_HALFb2013a_000231.jpg",
+  "PW_BAILa_BAILa2014a_004406.jpg",
+  "PW_MAIVc_MAIVc2013b_000049.jpg",
+  "PW_PETEd_PETEd2013a_000270.jpg",
+  "PW_LOCKb_LOCKb2013b_005076.jpg",
+  "PW_GEORa_GEORa2013b_000935.jpg",
+  "PW_HALFc_HALFc2013a_000253.jpg",
+  "PW_PETEf_PETEf2014a_006930.jpg",
+  "PW_DAMOa_DAMOa2014a_000319.jpg",
+  "PW_PETEe_PETEe2013b_003204.jpg",
+  "PW_NEKOa_NEKOa2012a_001303.jpg",
+  "PW_MAIVb_MAIVb2013a_000057.jpg",
+  "PW_SPIGa_SPIGa2013b_001120.jpg",
+  "PW_PETEc_PETEc2014a_008463.jpg",
+  "PW_NEKOc_NEKOc2013c_000017.jpg",
+  "PW_NEKOb_NEKOb2013_000737.jpg",
+  "PW_HALFb_HALFb2013a_000047.jpg",
+  "PW_BAILa_BAILa2014a_004518.jpg",
+  "PW_MAIVc_MAIVc2013b_001861.jpg",
+  "PW_PETEd_PETEd2013b_000426.jpg",
+  "PW_LOCKb_LOCKb2013b_004453.jpg",
+  "PW_GEORa_GEORa2013b_000719.jpg",
+  "PW_HALFc_HALFc2013a_000274.jpg",
+  "PW_PETEf_PETEf2014a_003587.jpg",
+  "PW_DAMOa_DAMOa2014a_000130.jpg",
+  "PW_PETEe_PETEe2013b_003553.jpg",
+  "PW_NEKOa_NEKOa2013b_000270.jpg",
+  "PW_MAIVb_MAIVb2012a_000151.jpg",
+  "PW_SPIGa_SPIGa2013b_001130.jpg"
+ ],
+ "dataset_root": "/home/user/bench_any/datasets/p5_r1_gold_pw_v2_200",
+ "gold_density": {
+  "n_instances": 3114,
+  "instances_per_image": 15.57,
+  "tier_mix_gold": {
+   "easy": 203,
+   "medium": 2815,
+   "hard": 96
+  },
+  "tier_mix_pool": {
+   "easy": 3021,
+   "medium": 64705,
+   "hard": 4336
+  },
+  "pool_instances_per_image": 7.09
+ }
+}

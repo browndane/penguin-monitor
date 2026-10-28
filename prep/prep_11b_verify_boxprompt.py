@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Empirically verify SAM3 box-prompt API on ONE gold-200 image before the full run.
 Casts inputs to model dtype (bfloat16) to fix the dtype mismatch. Prints text only."""
 import os
@@ -14,7 +15,7 @@ H0, W0 = img.shape[:2]
 print(f"img: {s.filepath.split('/')[-1]}  shape={img.shape}", flush=True)
 
 from ultralytics import RTDETR
-RTDETR_CKPT = "/home/vorse/bench_any/runs/detect/penguin-seg-combined_rtdetr-x/weights/best.pt"
+RTDETR_CKPT = "/home/user/bench_any/runs/detect/penguin-seg-combined_rtdetr-x/weights/best.pt"
 rtdetr = RTDETR(RTDETR_CKPT)
 r = rtdetr(s.filepath, conf=0.25, iou=0.7, imgsz=640, verbose=False)[0]
 if r.boxes is None or len(r.boxes) == 0:

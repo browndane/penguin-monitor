@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Recompute the Mask IoU column of P5's tab:annotation_effort.
 
 WHY

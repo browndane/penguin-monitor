@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Unit tests for penguins/crowd_agreement.py. Run: ~/cvML/bin/python -m pytest penguins/ -q
 (or plain ``python penguins/test_crowd_agreement.py``)."""
 

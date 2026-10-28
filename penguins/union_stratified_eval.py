@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Per-tier (Easy/Medium/Hard) mask mAP for the UNION prompt config, CPU-only.
 
 CORRECTED version. The first attempt was wrong on two counts:

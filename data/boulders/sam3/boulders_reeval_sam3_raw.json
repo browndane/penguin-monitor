@@ -1,0 +1,28 @@
+{
+ "corpus": "boulders",
+ "chosen_config": {},
+ "easy": 98.0172094890559,
+ "medium": 85.53349882011966,
+ "hard": 25.744610317384016,
+ "agg": 69.76510620885318,
+ "recall": 0.9467,
+ "target": {
+  "easy": 95.7,
+  "medium": 88.3,
+  "hard": 75.2,
+  "agg": 86.4
+ },
+ "deltas": {
+  "easy": 2.3,
+  "medium": -2.8,
+  "hard": -49.5
+ },
+ "agg_delta": -16.6,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers",
+ "pred_source": "boulders_sam3_raw.json (SAM3 standalone, pre-sieve)",
+ "n_preds_total": 912,
+ "n_raw_imgs": 123,
+ "n_gt_imgs": 123,
+ "n_preds_dropped_missing_fname": 0,
+ "n_gt_imgs_no_preds": 0
+}

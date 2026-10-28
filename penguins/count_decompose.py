@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Count-error decomposition: WHY the predicted count is wrong, not just by how much.
 
 WHY
@@ -120,14 +121,16 @@ def _load_preds(path: Path, gt, min_score: float):
 
 # ------------------------------------------------------------- difficulty
 
-def _tiers_for_image(boxes, h, w):
+def _tiers_for_image(boxes, h, w, tau1=None, tau2=None):
     """Easy/Medium/Hard per GT instance, using ap_difficulty's own scorer.
 
     Importing the scorer rather than restating the equations means the tier
-    boundaries here cannot drift from the ones P1 and P2 report.
+    boundaries here cannot drift from the ones P1 and P2 report. tau1/tau2
+    override Eq. 5's boundaries, for asking how much the tier story depends
+    on where they were drawn.
     """
     from ap_difficulty import (BBox, Instance, compute_difficulty_factors,
-                               assign_difficulty_tiers)
+                               assign_difficulty_tiers, TAU_1, TAU_2)
     insts = []
     for (x, y, bw, bh) in boxes:
         insts.append(Instance(
@@ -135,7 +138,9 @@ def _tiers_for_image(boxes, h, w):
                       width=bw / w, height=bh / h),
             image_id="", instance_id=0))
     compute_difficulty_factors(insts, w, h)
-    assign_difficulty_tiers(insts)
+    assign_difficulty_tiers(insts,
+                            tau1=TAU_1 if tau1 is None else tau1,
+                            tau2=TAU_2 if tau2 is None else tau2)
     return [i.difficulty_tier for i in insts]
 
 
@@ -170,15 +175,18 @@ def _decompose_image(pred_rles, gt_rles, iou_thr: float, contain_thr: float):
     ev = {"matched": 0, "missed": 0, "merged": 0, "split": 0, "spurious": 0,
           "merged_gt_absorbed": 0, "split_extra_preds": 0, "merged_unmatched": 0}
     # What happened to each GT instance, so an outcome can be attributed to
-    # a difficulty tier rather than only counted.
+    # a difficulty tier rather than only counted. The four fates partition GT
+    # exactly (see the assert below), so being split cannot be one of them: a
+    # GT instance can be matched *and* split. It rides alongside as a flag.
     fate = ["missed"] * n_g
+    was_split = [False] * n_g
     if n_g == 0:
         ev["spurious"] = n_p
-        ev["_fate"] = fate
+        ev["_fate"], ev["_split"] = fate, was_split
         return ev
     if n_p == 0:
         ev["missed"] = n_g
-        ev["_fate"] = fate
+        ev["_fate"], ev["_split"] = fate, was_split
         return ev
 
     iou = np.asarray(
@@ -243,6 +251,7 @@ def _decompose_image(pred_rles, gt_rles, iou_thr: float, contain_thr: float):
             ev["split"] += 1
             ev["split_extra_preds"] += len(extra)
             split_preds.update(extra)
+            was_split[j] = True
 
     # Whatever is left over once merge and split are accounted for.
     ev["missed"] = len([j for j in unmatched_gt
@@ -253,7 +262,7 @@ def _decompose_image(pred_rles, gt_rles, iou_thr: float, contain_thr: float):
     # Both sides must balance exactly, or the decomposition is lying.
     assert (ev["matched"] + ev["merged_unmatched"] + ev["merged_gt_absorbed"]
             + ev["missed"]) == n_g, f"GT accounting broken: {ev} vs n_gt={n_g}"
-    ev["_fate"] = fate
+    ev["_fate"], ev["_split"] = fate, was_split
     assert (ev["matched"] + ev["merged_unmatched"] + ev["split_extra_preds"]
             + ev["spurious"]) == n_p, f"pred accounting broken: {ev} vs n_pred={n_p}"
     return ev
@@ -288,7 +297,32 @@ def _aggregate(per_image):
     return agg
 
 
-def _run(gt_path, pred_path, min_score, iou_thr, contain_thr, by_tier=False):
+from ap_difficulty import TAU_1, TAU_2
+
+_FATES = ("matched", "missed", "absorbed", "merge_represented")
+
+
+def _tier_columns(tiers):
+    """Flatten the tier table into CSV columns, one per tier and outcome.
+
+    Rates are per GT instance *within the tier*, which is the whole point:
+    a raw Hard-tier miss count says nothing when Hard is also the rarest tier.
+    """
+    out = {}
+    for tier in ("Easy", "Medium", "Hard"):
+        n = tiers.get(tier, {}).get("total", 0)
+        low = tier.lower()
+        out[f"{low}_gt"] = n
+        for fate in _FATES + ("split",):
+            c = tiers.get(tier, {}).get(fate, 0)
+            out[f"{low}_{fate}"] = c
+            out[f"{low}_{fate}_rate"] = round(c / n, 4) if n else 0.0
+    out["spurious_untiered"] = tiers.get("untiered", {}).get("spurious", 0)
+    return out
+
+
+def _run(gt_path, pred_path, min_score, iou_thr, contain_thr, by_tier=False,
+         tau1=None, tau2=None):
     gt = _load_gt(gt_path)
     preds = _load_preds(pred_path, gt, min_score)
     rows, tiers = [], defaultdict(lambda: defaultdict(int))
@@ -296,14 +330,56 @@ def _run(gt_path, pred_path, min_score, iou_thr, contain_thr, by_tier=False):
         p = preds.get(iid, [])
         ev = _decompose_image(p, g["rles"], iou_thr, contain_thr)
         fate = ev.pop("_fate", [])
-        if by_tier and g["rles"]:
-            h, w = g["hw"]
-            for t, f in zip(_tiers_for_image(g["boxes"], h, w), fate):
-                tiers[t][f] += 1
-                tiers[t]["total"] += 1
+        was_split = ev.pop("_split", [])
+        if by_tier:
+            # A spurious prediction covers no GT instance, so it has no tier.
+            # Counted for every image, including the ones with no GT at all.
+            tiers["untiered"]["spurious"] += ev["spurious"]
+            if g["rles"]:
+                h, w = g["hw"]
+                per_img = defaultdict(int)
+                for t, f, s in zip(_tiers_for_image(g["boxes"], h, w, tau1, tau2),
+                                   fate, was_split):
+                    tiers[t][f] += 1
+                    tiers[t]["total"] += 1
+                    per_img[f"{t}_{f}"] += 1
+                    per_img[f"{t}_total"] += 1
+                    if s:
+                        tiers[t]["split"] += 1
+                        per_img[f"{t}_split"] += 1
+                # Per-image tier counts, so a bootstrap can resample images
+                # without re-decomposing every draw.
+                ev.update(per_img)
         rows.append({"image_id": iid, "file": g["file"],
                      "gt_count": len(g["rles"]), "pred_count": len(p), **ev})
     return (rows, tiers) if by_tier else rows
+
+
+def _resolve_run_dir(run_dir):
+    """Find the GT and prediction JSON inside a run dir, whichever wrapper wrote it.
+
+    Only DINOv3-M2F and EoMT use the flat `_bench_predictions_resolved.json` this
+    script originally assumed. RF-DETR writes `predictions_test.json` at the root,
+    Ultralytics writes into a `<split>/` subdir under string image ids that
+    bench_eval then rewrites. Preference order matters: an ID-fixed file matches the
+    GT's integer image ids, a raw one overlaps it by zero images and scores as a
+    total miss rather than an error.
+    """
+    pred_names = ("_bench_predictions_catfixed.json",     # YOLO: id-fixed then cat-fixed
+                  "_bench_predictions_resolved.json",     # DINOv3-M2F: category 0→1
+                  "_bench_predictions_fixed.json",        # id-fixed only
+                  "predictions_test.json",                # RF-DETR, already int ids
+                  "predictions.json")                     # last resort, may be raw
+    gt = next((p for p in sorted(run_dir.rglob("_bench_gt_coco.json"))
+               if not any(part.startswith("_superseded_") for part in p.parts)), None)
+    if gt is None:
+        return run_dir / "_bench_gt_coco.json", run_dir / pred_names[1]
+    # Prefer a prediction file beside the GT — for YOLO both live in <split>/.
+    for name in pred_names:
+        for cand in (gt.parent / name, run_dir / name):
+            if cand.exists():
+                return gt, cand
+    return gt, run_dir / pred_names[1]
 
 
 def main():
@@ -322,11 +398,16 @@ def main():
     ap.add_argument("--out", type=Path, help="write per-image CSV here")
     ap.add_argument("--out_agg", type=Path, help="append aggregate row to this CSV")
     ap.add_argument("--tag", default="", help="label for the aggregate row")
+    ap.add_argument("--by_tier", action="store_true",
+                    help="stratify GT outcomes by ap_difficulty Easy/Medium/Hard tier")
+    ap.add_argument("--tau1", type=float, default=None,
+                    help="override Eq. 5 Easy/Medium boundary (default 0.30)")
+    ap.add_argument("--tau2", type=float, default=None,
+                    help="override Eq. 5 Medium/Hard boundary (default 0.58)")
     args = ap.parse_args()
 
     if args.run_dir:
-        gt_path = args.run_dir / "_bench_gt_coco.json"
-        pred_path = args.run_dir / "_bench_predictions_resolved.json"
+        gt_path, pred_path = _resolve_run_dir(args.run_dir)
     else:
         gt_path, pred_path = args.gt, args.preds
     if not gt_path or not pred_path or not Path(gt_path).exists() or not Path(pred_path).exists():
@@ -348,10 +429,21 @@ def main():
                 best = (s, a, rows)
         score, agg, rows = best
         print(f"\nMAE-optimal score threshold: {score}")
+        # The sweep runs untiered to stay cheap; tier once, at the winner.
+        tiers = _run(gt_path, pred_path, score, args.iou, args.contain,
+                     by_tier=True, tau1=args.tau1,
+                     tau2=args.tau2)[1] if args.by_tier else None
     else:
         score = args.min_score
-        rows = _run(gt_path, pred_path, score, args.iou, args.contain)
+        out = _run(gt_path, pred_path, score, args.iou, args.contain,
+                   by_tier=args.by_tier, tau1=args.tau1, tau2=args.tau2)
+        rows, tiers = out if args.by_tier else (out, None)
         agg = _aggregate(rows)
+
+    if tiers is not None:
+        agg.update(_tier_columns(tiers))
+        agg["tau1"] = args.tau1 if args.tau1 is not None else TAU_1
+        agg["tau2"] = args.tau2 if args.tau2 is not None else TAU_2
 
     print(f"\n{tag}  (score>={score}, IoU>={args.iou}, containment>={args.contain})")
     for k, v in agg.items():
@@ -359,8 +451,13 @@ def main():
 
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
+        # Tier columns only appear on images that have GT in that tier, so the
+        # header is the union over rows, not the first row's keys.
+        fields = list(rows[0].keys())
+        for r in rows:
+            fields += [k for k in r if k not in fields]
         with open(args.out, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+            w = csv.DictWriter(f, fieldnames=fields, restval=0)
             w.writeheader()
             w.writerows(rows)
         print(f"\nper-image CSV -> {args.out}")

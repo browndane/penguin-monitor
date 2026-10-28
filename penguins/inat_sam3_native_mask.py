@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Score SAM 3's own masks on the iNaturalist test split, same GT and same
 eval path as the SAM 2-prompted row already in P5's tab:zeroshot_mask.
 

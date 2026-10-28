@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Export p5_gold200_candidate (0.25 full-recall) as per-image COCO JSON for Roboflow upload.
 
 Writes to ~/bench_any/datasets/p5_gold200_roboflow/:
@@ -11,7 +12,7 @@ FiftyOne polylines (filled, closed) converted to COCO segmentation [[x,y,...]] f
 import os, json, shutil, fiftyone as fo
 from pathlib import Path
 
-OUT = Path("/home/vorse/bench_any/datasets/p5_gold200_roboflow")
+OUT = Path("/home/user/bench_any/datasets/p5_gold200_roboflow")
 (OUT / "images").mkdir(parents=True, exist_ok=True)
 
 ds = fo.load_dataset("p5_gold200_candidate")

@@ -1,0 +1,72 @@
+{
+ "date": "2026-07-19T12:59:34.689139",
+ "corpora": {
+  "boulders": {
+   "gold_images": "data/boulders-penguin/train/images",
+   "gold_labels": "data/boulders-penguin/train/labels",
+   "n_images": 123,
+   "n_instances": 769,
+   "tier_counts": {
+    "easy": 204,
+    "medium": 535,
+    "hard": 30
+   },
+   "tier_pct": {
+    "easy": 26.5,
+    "medium": 69.6,
+    "hard": 3.9
+   },
+   "image_res": "5184x3456",
+   "tiers_json": "~/bench_any/runs/p5_r1_v2/boulders/boulders_tiers.json",
+   "sam3_raw_json": "~/bench_any/runs/p5_r1_v2/boulders/boulders_sam3_raw.json",
+   "sieve_sweep_json": "~/bench_any/runs/p5_r1_v2/boulders/boulders_sieve_sweep.json",
+   "sam3_pred_json": "~/bench_any/runs/p5_r1_v2/boulders/boulders_sam3_pred.json",
+   "reeval_json": "~/bench_any/runs/p5_r1_v2/boulders/boulders_reeval_sam3.json"
+  }
+ },
+ "params": {
+  "SAM3_model": "facebook/sam3",
+  "SAM3_dtype": "bfloat16",
+  "SCORE": 0.25,
+  "MASK_THR": 0.5,
+  "LONG_EDGE_CAP": 2448,
+  "text_prompt": "a penguin",
+  "sweep_grid": {
+   "min_area": [
+    32,
+    64,
+    128
+   ],
+   "nms_iou": [
+    0.7,
+    0.8,
+    0.9
+   ],
+   "max_dim_frac": [
+    0.9,
+    0.95,
+    1.0
+   ],
+   "score_floor": [
+    0.25,
+    0.28
+   ]
+  },
+  "sweep_objective": "AP@0.5 with recall>=0.95 floor",
+  "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers",
+  "HF_HOME": "/mnt/storage/sam3"
+ },
+ "scripts": {
+  "prep_09": "~/bench_any/datasets/prep/prep_09_filebased.py",
+  "prep_11": "~/bench_any/datasets/prep/prep_11_filebased.py",
+  "prep_10": "~/bench_any/datasets/prep/prep_10_filebased.py"
+ },
+ "versions": {
+  "transformers": "5.13.0",
+  "torch": "2.12.1+cu132",
+  "numpy": "2.4.6",
+  "cv2": "4.10.0",
+  "pycocotools": "unknown",
+  "python": ""
+ }
+}

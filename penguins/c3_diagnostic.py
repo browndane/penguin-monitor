@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase C3 diagnostic: WHY do the papers' difficulty-vs-failure r (0.379-0.526)
 differ from C3's recomputed r (~0.05-0.21)?
 
@@ -17,8 +18,8 @@ from scipy import stats
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-GT = "/home/vorse/bench_any/runs/segment/african-penguin_eomt-large_b2_e150_i640_be64_fair_grid/_bench_gt_coco.json"
-PRED = "/home/vorse/bench_any/runs/segment/african-penguin_eomt-large_b2_e150_i640_be64_fair_grid/_bench_predictions_resolved.json"
+GT = "/home/user/bench_any/runs/segment/african-penguin_eomt-large_b2_e150_i640_be64_fair_grid/_bench_gt_coco.json"
+PRED = "/home/user/bench_any/runs/segment/african-penguin_eomt-large_b2_e150_i640_be64_fair_grid/_bench_predictions_resolved.json"
 
 # Difficulty constants (ap_difficulty.py L52-58)
 A_REF, N_MAX, ALPHA, BETA, GAMMA = 0.04, 8.0, 0.40, 0.35, 0.25

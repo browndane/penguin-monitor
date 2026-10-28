@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """
 Unit tests for temporal_coverage.py — synthetic EXIF fixtures covering the three verdict branches:
 multi-week (CJS-feasible), sub-week multi-day (Lincoln-Petersen only), and single-day (infeasible).

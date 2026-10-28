@@ -1,0 +1,60 @@
+{
+ "PW": {
+  "yolo11x_pred": {
+   "label": "YOLOv11x-seg",
+   "unstratified": 63.55075028506354,
+   "paper": 88.0,
+   "delta": -24.4,
+   "n_images": 50,
+   "n_gt": 1384,
+   "n_preds": 5360
+  },
+  "rtdetr_sam3_pred": {
+   "label": "RT-DETR + SAM 3 box-prompt",
+   "unstratified": 71.7146650706588,
+   "paper": 89.4,
+   "delta": -17.7,
+   "n_images": 50,
+   "n_gt": 1384,
+   "n_preds": 1777
+  },
+  "sam3_pred": {
+   "label": "SAM 3 + sieve (zero-shot)",
+   "unstratified": 74.00746373654663,
+   "paper": 89.1,
+   "delta": -15.1,
+   "n_images": 50,
+   "n_gt": 1384,
+   "n_preds": 1676
+  }
+ },
+ "iNat": {
+  "yolo11x_pred": {
+   "label": "YOLOv11x-seg",
+   "unstratified": 89.79158660563556,
+   "paper": 84.4,
+   "delta": 5.4,
+   "n_images": 50,
+   "n_gt": 394,
+   "n_preds": 1700
+  },
+  "rtdetr_sam3_pred": {
+   "label": "RT-DETR + SAM 3 box-prompt",
+   "unstratified": 84.18641049753904,
+   "paper": 86.2,
+   "delta": -2.0,
+   "n_images": 50,
+   "n_gt": 394,
+   "n_preds": 577
+  },
+  "sam3_pred": {
+   "label": "SAM 3 + sieve (zero-shot)",
+   "unstratified": 96.53485840075108,
+   "paper": 86.7,
+   "delta": 9.8,
+   "n_images": 50,
+   "n_gt": 394,
+   "n_preds": 491
+  }
+ }
+}

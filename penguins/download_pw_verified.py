@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Pull the verified Penguin-Watch subsets out of the DaneSegmentation workspace.
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
+"""Pull the verified Penguin-Watch subsets out of the anonymous workspace.
 
 WHY
 ---
@@ -31,7 +32,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
-WORKSPACE = "danesegmentation"
+WORKSPACE = "anonymous-workspace"
 PROJECTS = {          # roboflow project id -> destination dir name
     "halfb": "HALFb",
     "halfc": "HALFc",

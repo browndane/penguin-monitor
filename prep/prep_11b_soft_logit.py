@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase 2a soft-logit SAM3 run: save mask PROBABILITIES (sigmoid) for fusion.
 
 WHY
@@ -30,7 +31,7 @@ import numpy as np
 os.environ.setdefault("HF_HOME", "/mnt/LinuxBackup/sam3")
 os.environ.setdefault("HF_HUB_CACHE", "/mnt/LinuxBackup/sam3/hub")
 
-sys.path.insert(0, "/home/vorse/bench_any/datasets/prep")
+sys.path.insert(0, "/home/user/bench_any/datasets/prep")
 import prep_11_filebased as P11  # reuse get_sam3, Sam3Processor, constants
 
 RUNS = Path.home() / "bench_any" / "runs"

@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Assemble the 200-image 4-corpus gold subset for P5 tab:stratified_performance.
 
 Composition (paper L166: "200 images uniformly sampled across the four corpora", ~50 each):

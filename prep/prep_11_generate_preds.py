@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Generate the 3 evaluable prediction rows on p5_gold200 (mask mAP@0.5 re-eval).
 
 Rows (pred field names):
@@ -25,8 +26,8 @@ import cv2
 import fiftyone as fo
 
 DS = "p5_gold200"
-YOLO_CKPT = "/home/vorse/bench_any/runs/segment/penguin-seg-combined_yolo11x-seg/weights/best.pt"
-RTDETR_CKPT = "/home/vorse/bench_any/runs/detect/penguin-seg-combined_rtdetr-x/weights/best.pt"
+YOLO_CKPT = "/home/user/bench_any/runs/segment/penguin-seg-combined_yolo11x-seg/weights/best.pt"
+RTDETR_CKPT = "/home/user/bench_any/runs/detect/penguin-seg-combined_rtdetr-x/weights/best.pt"
 LONG_EDGE_CAP = 2448  # downsample for SAM3 on huge frames to avoid OOM
 SCORE = 0.25
 MASK_THR = 0.5

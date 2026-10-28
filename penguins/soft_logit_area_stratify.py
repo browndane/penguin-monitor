@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Why the soft-logit acceptance test passes on Boulders and fails on SANParks.
 
 WHY

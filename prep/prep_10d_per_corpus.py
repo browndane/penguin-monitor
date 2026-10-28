@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Per-corpus breakdown of the YOLOv11x medium-tier collapse.
 Which corpus drives the -22pp gap? v2-fixed corpora (SANParks/Boulders) or PW/iNat?"""
 import os, sys, json, tempfile, copy
@@ -10,7 +11,7 @@ from pycocotools.cocoeval import COCOeval
 import pycocotools.mask as mu
 
 DS = "p5_gold200"
-TIERS_MAN = "/home/vorse/bench_any/runs/p5_r1_gold/gold200_tiers.json"
+TIERS_MAN = "/home/user/bench_any/runs/p5_r1_gold/gold200_tiers.json"
 
 def corpus_of(fp):
     b = os.path.basename(fp)

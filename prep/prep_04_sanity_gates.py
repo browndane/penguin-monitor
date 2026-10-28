@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Script 4: Sanity gates for all three output datasets.
 
 Checks:

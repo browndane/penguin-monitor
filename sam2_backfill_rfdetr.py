@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """One-shot SAM2 backfill for RF-DETR run dirs that already have predictions.
 
 Reads each run dir's predictions_test.json + _bench_gt_coco.json, runs SAM2,
@@ -13,9 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bench_eval as _be
 
 SAM2_CKPT = os.environ.get(
-    "SAM2_CKPT", "/home/vorse/sam2/checkpoints/sam2.1_hiera_large.pt")
+    "SAM2_CKPT", "/home/user/sam2/checkpoints/sam2.1_hiera_large.pt")
 SAM2_CONFIG = os.environ.get(
-    "SAM2_CONFIG", "/home/vorse/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml")
+    "SAM2_CONFIG", "/home/user/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml")
 
 RUNS_ROOT = Path.home() / "bench_any" / "runs" / "segment"
 

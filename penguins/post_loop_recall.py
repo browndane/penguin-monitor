@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Post-loop recall study for P1 (CrossParadigm*.tex line 279).
 
 The annotation pipeline runs detector proposals -> two-expert verification ->
@@ -17,8 +18,8 @@ Run with the server venv (pycocotools not needed; pure box-IoU):
 import json
 from collections import defaultdict
 
-YOLO_RD = "/home/vorse/bench_any/runs/segment/african-penguin_yolo11x-seg_b0.98_e150_i640_be64_fair_grid/test"
-RF_RD   = "/home/vorse/bench_any/runs/segment/african-penguin_rf-detr-seg-xlarge_b1_e150_i640_be64_fair_grid"
+YOLO_RD = "/home/user/bench_any/runs/segment/african-penguin_yolo11x-seg_b0.98_e150_i640_be64_fair_grid/test"
+RF_RD   = "/home/user/bench_any/runs/segment/african-penguin_rf-detr-seg-xlarge_b1_e150_i640_be64_fair_grid"
 IOU_HIT = 0.50
 
 

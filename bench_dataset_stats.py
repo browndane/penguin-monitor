@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # bench_dataset_stats.py — ground-truth dataset profiler for the bench pipeline.
 #
 # Why this exists
