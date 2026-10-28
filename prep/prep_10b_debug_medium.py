@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Reproduce the medium-tier COCOeval crash with a FULL traceback.
 Runs ONLY the medium tier for the sam3_pred row, no try/except."""
 import os, sys, json, traceback
@@ -10,7 +11,7 @@ from pycocotools.cocoeval import COCOeval
 import pycocotools.mask as mu
 
 DS = "p5_gold200"
-TIERS_MAN = "/home/vorse/bench_any/runs/p5_r1_gold/gold200_tiers.json"
+TIERS_MAN = "/home/user/bench_any/runs/p5_r1_gold/gold200_tiers.json"
 
 def encode_mask(mask_bool):
     m = np.asfortranarray(mask_bool.astype(np.uint8))

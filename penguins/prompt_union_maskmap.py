@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Mask-mAP of the prompt union against the gold COCO GT, no GPU.
 
 The two prompts' SAM3 mask predictions are already on disk. Merge them per

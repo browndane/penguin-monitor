@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Launch FiftyOne session for user to verify/fix SAM3 autolabels on p5_gold200_candidate.
 
 Creates a saved view of zero-mask samples, then launches the app on port 5151 and blocks.

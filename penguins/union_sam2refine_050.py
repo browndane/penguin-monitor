@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Union+SAM2 control pass at thr 0.50 (matches §10 single-prompt threshold).
 
 Self-reporting: runs SAM2 on the union boxes at 0.50, evals against gold,

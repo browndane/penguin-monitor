@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Time the SAM2 mask-refinement step of the semi-automated annotation pipeline.
 
 This measures the per-image cost the SAM2-refine step adds: prompt SAM2's image
@@ -22,7 +23,7 @@ import sys
 import time
 from pathlib import Path
 
-_SAM2_ROOT = "/home/vorse/sam2"
+_SAM2_ROOT = "/home/user/sam2"
 if _SAM2_ROOT not in sys.path:
     sys.path.insert(0, _SAM2_ROOT)
 

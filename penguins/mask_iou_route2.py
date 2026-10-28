@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Route 2 of P5's tab:annotation_effort: SAM 2 prompted with hand-drawn boxes.
 
 WHY
@@ -26,7 +27,7 @@ RUNS = Path.home() / "bench_any" / "runs"
 OBJ2 = RUNS / "obj2_counting"
 OUT_DIR = RUNS / "p5_mask_iou_routes"
 IMG_ROOT = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin")
-SAM2_CKPT = "/home/vorse/sam2/checkpoints/sam2.1_hiera_large.pt"
+SAM2_CKPT = "/home/user/sam2/checkpoints/sam2.1_hiera_large.pt"
 SAM2_CFG = "sam2.1/sam2.1_hiera_l.yaml"
 CORPORA = {"boulders-penguin": "Boulders", "sanparks-algoa": "SANParks"}
 
@@ -36,11 +37,11 @@ ROUTE34 = {"sam3_raw": {"Boulders": 0.9015, "SANParks": 0.7600},
 
 
 def build_predictor():
-    sys.path.insert(0, "/home/vorse/sam2")
+    sys.path.insert(0, "/home/user/sam2")
     from hydra import initialize_config_dir
     from hydra.core.global_hydra import GlobalHydra
     GlobalHydra.instance().clear()
-    initialize_config_dir(config_dir="/home/vorse/sam2/sam2/configs", version_base="1.2")
+    initialize_config_dir(config_dir="/home/user/sam2/sam2/configs", version_base="1.2")
     from sam2.build_sam import build_sam2
     from sam2.sam2_image_predictor import SAM2ImagePredictor
     import torch
@@ -81,8 +82,8 @@ def route2(key, predictor):
 
 def patch_paper(value):
     """Replace the one cell that was still on the old protocol."""
-    tex = Path.home() / "Dropbox/myPapers/CurrentlyWriting/p5_penguin_monitor_elsevier" \
-                        "/penguin_monitor_elsevier.tex"
+    tex = Path.home() / "paper" \
+                        "/paper.tex"
     src = tex.read_text()
     cand = "SAM~2 box-prompt + manual box draw & 3.2 & 53.3 & 0.87 \\\\"
     if src.count(cand) == 1:

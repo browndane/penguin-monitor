@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Give every supervised baseline SAM 2 masks on the two v2-gold OOD corpora.
 
 WHY
@@ -53,9 +54,9 @@ SENTINEL = OUT / "_ood_sam2_refine_done"
 LOG = OUT / "ood_sam2_refine.log"
 
 CKPTS = ["rf-detr-seg-xlarge", "rf-detr-seg-large", "rtdetr-4", "rtdetr-3",
-         "eomt-large", "yolo11x-seg"]
-SAM2_CK = "/home/vorse/sam2/checkpoints/checkpoints/sam2.1_hiera_large.pt"
-SAM2_CFG = "/home/vorse/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml"
+         "eomt-large", "yolo11x-seg", "yolo11x-seg-native"]
+SAM2_CK = "/home/user/sam2/checkpoints/checkpoints/sam2.1_hiera_large.pt"
+SAM2_CFG = "/home/user/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml"
 
 
 def log(msg):

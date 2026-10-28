@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Script 2: Gold-subset sampler + R1 gold dataset.
 
 Builds ~/bench_any/datasets/p5_r1_gold/ (YOLO format):

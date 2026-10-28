@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Script 1: COCO -> YOLO converter for Penguin-Watch.
 
 For each of the 16 PW sub-colony dirs, read _annotations.coco.json,
@@ -28,7 +29,8 @@ cv2.setNumThreads(1)
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
-SRC = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/penguin-watch")
+# The raw unverified tree was deleted 2026-07-31; this is the verified Roboflow export.
+SRC = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/penguin-watch")
 STAGING = Path(os.path.expanduser("~/bench_any/datasets/pw_yolo_staging"))
 # forced lowercase .jpg extension for YOLO friendliness; original is .JPG
 OUT_EXT = ".jpg"

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Decisive diagnostic for the R1 medium-tier collapse.
 
 Hypotheses under test (medium tier, all 3 rows):
@@ -20,7 +21,7 @@ from pycocotools.cocoeval import COCOeval
 import pycocotools.mask as mu
 
 DS = "p5_gold200"
-TIERS_MAN = "/home/vorse/bench_any/runs/p5_r1_gold/gold200_tiers.json"
+TIERS_MAN = "/home/user/bench_any/runs/p5_r1_gold/gold200_tiers.json"
 ROWS = [("sam3", "sam3_pred"), ("yolo11x", "yolo11x_pred"), ("rtdetr", "rtdetr_sam3_pred")]
 
 def encode_mask(mask_bool):

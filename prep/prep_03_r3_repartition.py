@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Script 3: R3 group-aware + random-sensitivity repartition (PW only).
 
 3a. Group-aware ~/bench_any/datasets/p5_r3_groupaware/:

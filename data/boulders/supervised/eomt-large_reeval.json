@@ -1,0 +1,11 @@
+{
+ "ckpt_tag": "eomt-large",
+ "corpus": "boulders",
+ "easy": 97.02953626283008,
+ "medium": 83.56973378873224,
+ "hard": 31.825214001523307,
+ "agg": 70.80816135102855,
+ "recall": 0.8908,
+ "paper_in_dist_mAP50": 0.834,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers"
+}

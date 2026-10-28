@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Load Roboflow v2 user-verified masks into a FiftyOne dataset keyed by ORIGINAL filename.
 
 User fixed FPs + added stragglers in the Roboflow GUI on projects `sanparks-algoa`
@@ -19,8 +20,8 @@ from pathlib import Path
 import fiftyone as fo
 
 VENV = os.path.expanduser("~/cvML/bin/python")
-DOWNLOAD = Path("/home/vorse/bench_any/datasets/p5_gold200_roboflow_download")
-MANIFEST = Path("/home/vorse/bench_any/datasets/p5_gold200_roboflow/upload_manifest.json")
+DOWNLOAD = Path("/home/user/bench_any/datasets/p5_gold200_roboflow_download")
+MANIFEST = Path("/home/user/bench_any/datasets/p5_gold200_roboflow/upload_manifest.json")
 DS_NAME = "p5_gold200_verified"
 
 

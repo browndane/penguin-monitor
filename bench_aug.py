@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 from __future__ import annotations
 
 import random
@@ -32,6 +33,34 @@ def ultralytics_aug_args(policy: str) -> list[str]:
     for key, value in vals.items():
         out += [f"--{key}", str(value)]
     return out
+
+
+def ultralytics_native_albumentations() -> list:
+    """Ultralytics' default training augmentation, as Albumentations.
+
+    rtdetr_external has no native recipe of its own — under --aug_policy native
+    its loader applies nothing but resize/normalise, so "native" would mean
+    "unaugmented" and would not be comparable to the other frameworks' native
+    arms. RT-DETR therefore inherits Ultralytics' defaults here.
+
+    Covers the per-sample knobs: fliplr 0.5, scale 0.5, translate 0.1,
+    hsv_h 0.015 / hsv_s 0.7 / hsv_v 0.4. Ultralytics' batch-level ops (mosaic,
+    mixup, cutmix, copy_paste) and erasing have no per-sample Albumentations
+    equivalent and are not reproduced.
+    """
+    try:
+        import albumentations as A
+        import cv2
+    except Exception:
+        return []
+    return [
+        A.HorizontalFlip(p=0.5),
+        A.Affine(scale=(0.5, 1.5), translate_percent=(-0.1, 0.1),
+                 border_mode=cv2.BORDER_CONSTANT, fill=114, fill_mask=0, p=1.0),
+        A.HueSaturationValue(hue_shift_limit=int(0.015 * 180),
+                             sat_shift_limit=int(0.7 * 255),
+                             val_shift_limit=int(0.4 * 255), p=1.0),
+    ]
 
 
 def shared_albumentations_policy(policy: str, imgsz: int, task: str | None = None,

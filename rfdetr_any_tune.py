@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # USAGE (Train):  python3 rfdetr_any_tune.py --data /path/to/dataset --epochs 100 --batch_sz 4 --model rfdetr-seg-medium
 # USAGE (Resume): python3 rfdetr_any_tune.py --data /path/to/dataset --resume
 #
@@ -409,13 +410,36 @@ if __name__ == "__main__":
     ap.add_argument("--imgsz", default=624, type=int, help="RF-DETR default resolution is 576 (multiples of 56)")
     ap.add_argument("--lr", default=1e-4, type=float)
     ap.add_argument("--weight_decay", default=1e-4, type=float)
-    ap.add_argument("--threads", default=4, type=int)
+    ap.add_argument("--threads", default=8, type=int,
+                    help="DataLoader num_workers. 0 means zero worker processes — the main "
+                         "process loads every batch and the GPU starves. Use 8 unless pinning.")
+    # rfdetr>=1.9.2 pin (W.4, 2026-08-24): 1.9.0 deadlocked at every epoch
+    # boundary on Python 3.14 (loky semaphore leak on spawn); 1.9.2 fixed it.
+    # The segm-eval score filter (score_threshold=0.5 in upstream postprocess,
+    # ~AP-neutral, keeps ~32 masks/image) is the FIX for the slow per-epoch
+    # eval (BUG 21) — RFDETR_DISABLE_SEGM_EVAL=1 is the FALLBACK that disables
+    # segm eval entirely. Chain scripts set RFDETR_DISABLE_SEGM_EVAL=0 (eval ON).
+    ap.add_argument("--prefetch_factor", default=6, type=int,
+                    help="Batches each worker preloads. Upstream default is 2, which starves an "
+                         "H100-class GPU on this dataset. Only applied when --threads > 0.")
+    ap.add_argument("--no_persistent_workers", action='store_true',
+                    help="Tear workers down between epochs. Default keeps them alive, which "
+                         "avoids re-forking every epoch. Only applies when --threads > 0.")
+    ap.add_argument("--no_pin_memory", action='store_true',
+                    help="Disable pinned host memory. Default pins, which allows async H2D copy.")
     ap.add_argument("--resume", action='store_true')
     ap.add_argument("--inference_only", action='store_true', help="Skip training; eval given weights via train(epochs=0,run_test=True)")
     ap.add_argument("--aug_policy", choices=["native", "off", "fair"], default="native",
                     help="When != native, monkey-patch rfdetr.datasets.coco.CocoDetection.__getitem__ "
                          "so the train split passes through the shared Albumentations pipeline before "
-                         "rfdetr's own _transforms run. Eval split is left untouched.")
+                         "rfdetr's own _transforms run. Eval split is left untouched. When != native, "
+                         "rfdetr's own AUG_CONFIG is suppressed (aug_config={}) to avoid double aug.")
+    ap.add_argument("--augmentation_backend", choices=["cpu", "auto", "gpu"], default="",
+                    help="rfdetr TrainConfig.augmentation_backend. 'gpu'/'auto' runs rfdetr's own "
+                         "aug (resize/normalize, and native AUG_CONFIG unless aug_policy!=native) on "
+                         "GPU via Kornia. The bench's fair/off Albumentations pipeline still runs on "
+                         "CPU in __getitem__ before this; this flag only relocates rfdetr's internal "
+                         "transforms. Empty string = let rfdetr default (cpu).")
     # Opt-in SAM2-prompted segmentation for detection-only RF-DETR variants so
     # the bench summary can report seg mAP for pure detectors.  seg variants
     # (rf-detr-seg-*) also accept it to report sam2_* alongside native seg_*.
@@ -457,11 +481,11 @@ if __name__ == "__main__":
     defaults = rfdetr_variant_defaults(ModelCls)
     ps = defaults.get("patch_size")
     if ps and int(ps) != 14:
-        print(f"ℹ️ RF-DETR {ModelCls.__name__} is a patch-{ps} published checkpoint "
+        print(f"ℹ RF-DETR {ModelCls.__name__} is a patch-{ps} published checkpoint "
               f"({defaults.get('pretrain_weights')}); keeping that architecture so the "
               "RF-DETR weights load. Suppressing duplicate upstream DINOv2 patch-14 warnings.")
     if len(CLASSES) == 1:
-        print("ℹ️ RF-DETR single-class COCO eval: normalizing predicted category_id to 1 "
+        print("ℹ RF-DETR single-class COCO eval: normalizing predicted category_id to 1 "
               "to match the generated 1-indexed GT categories.")
 
     # RF-DETR wants an int batch_size, OR the literal "auto". When set to "auto" RF-DETR
@@ -534,14 +558,50 @@ if __name__ == "__main__":
     # Overriding `resolution` re-initialises the PE and DESTROYS pretrained backbone
     # compatibility (metrics collapse to 0). Do NOT pass `resolution=` — let rfdetr use the
     # config default for the chosen variant. `--imgsz` is informational only here.
-    print(f"ℹ️ --imgsz is informational for RF-DETR; using its built-in pretrained resolution.")
+    print(f"ℹ --imgsz is informational for RF-DETR; using its built-in pretrained resolution.")
+
+    if args.threads <= 0:
+        print("[bench] ℹ --threads 0: auto (min(8, cpu_count)). -1 forces no workers.")
+
+    # `--threads 0` means auto: the loky epoch-boundary deadlock that made chains
+    # pass 0 was fixed in rfdetr 1.9.2. -1 still forces single-process loading.
+    # cvBench speed port.
+    workers = 0 if args.threads < 0 else (args.threads or min(8, os.cpu_count() or 8))
 
     train_kwargs = dict(
         dataset_dir=str(COCO_DIR), output_dir=str(RUN_DIR),
         batch_size=bs, lr=args.lr, weight_decay=args.weight_decay,
-        num_workers=args.threads,
+        num_workers=workers,
         tensorboard=True, run_test=True,
+        # run_test=True ⇒ upstream BestModelCallback.on_fit_end loads
+        # checkpoint_best_total.pth into the module, suppresses the EMA swap,
+        # then runs trainer.test() on the test split. The single test/*
+        # TensorBoard scalar that harvest_metrics_from_tb prefers is therefore
+        # the BEST checkpoint scored on test, not a stray val value. This is why
+        # the headline mAP is best-checkpoint-on-test by construction — do not
+        # re-litigate "best-vs-last" for RF-DETR; best==last only if the best
+        # epoch is the last (confirmed: both run_test scalars match the last
+        # epoch's val). See CLAUDE.md "RF-DETR best-vs-last" + E.5.
+        # Loader depth. Upstream defaults prefetch_factor=2 (module_data.py), which
+        # leaves the GPU waiting on decode+augment for this dataset. persistent_workers
+        # and prefetch_factor are illegal with num_workers=0, so both stay None there.
+        pin_memory=not args.no_pin_memory,
+        persistent_workers=(workers > 0 and not args.no_persistent_workers),
+        prefetch_factor=(args.prefetch_factor if workers > 0 else None),
     )
+    # Bench aug_policy != native defines the augmentation contract (the shared
+    # Albumentations pipeline injected by _install_bench_aug_policy_for_rfdetr).
+    # rfdetr's own AUG_CONFIG (HorizontalFlip p=0.5) otherwise fires a SECOND time
+    # via _transforms -> make_coco_transforms, doubling the flip and breaking the
+    # cross-framework fair comparison. Pass aug_config={} to suppress rfdetr's
+    # native aug on both backends (CPU Albumentations path AND the Kornia GPU path,
+    # which falls back to AUG_CONFIG when aug_config is None).
+    if args.aug_policy != "native":
+        train_kwargs["aug_config"] = {}
+        print(f"[bench] aug_policy={args.aug_policy}: rfdetr native AUG_CONFIG suppressed (aug_config={{}})")
+    if args.augmentation_backend:
+        train_kwargs["augmentation_backend"] = args.augmentation_backend
+        print(f"[bench] augmentation_backend={args.augmentation_backend}")
     # Only forward grad_accum_steps when explicitly set (>0). Leaving it unset lets the
     # RF-DETR auto-batch path overwrite the config default (4) with the probe-derived
     # value, which is what we want for --batch_sz<1. Useful manual override: when the
@@ -562,6 +622,12 @@ if __name__ == "__main__":
     else:
         _ga = args.grad_accum_steps if args.grad_accum_steps > 0 else 'auto/default'
         print(f"🚂 Training {args.epochs} epochs (patience={args.patience}, bs={bs}, grad_accum={_ga}) …")
+        # No sanity validation. BestModelCallback's EMA track has no sanity guard, so on a fine-tune from
+        # trained weights the 2-photo sanity mAP (1.0 on p2_old_C_ft2, 2026-10-18) becomes best EMA for good
+        # and checkpoint_best_total.pth ends up as the start weights.
+        import rfdetr.training as _rt
+        _bt = _rt.build_trainer
+        _rt.build_trainer = lambda *a, **k: _bt(*a, **{**k, "num_sanity_val_steps": 0})
         model.train(epochs=args.epochs, early_stopping=True,
                     early_stopping_patience=args.patience, **train_kwargs)
 
@@ -654,6 +720,60 @@ if __name__ == "__main__":
             print(f"⚠️ rfdetr fps probe skipped: {_e2}")
     except Exception as _e:
         print(f"⚠️ params/fps probe failed: {_e}")
+
+    # ---- Derive the PREDICTIONS from the selected checkpoint ---------------
+    # Careful: the headline mAPs were ALREADY best-checkpoint numbers, and only
+    # the prediction dump was not. `run_test=True` above makes upstream's
+    # BestModelCallback.on_fit_end (rfdetr/training/callbacks/best_model.py:638)
+    # load checkpoint_best_total.pth into the module, suppress the EMA weight
+    # swap, and run trainer.test(). The resulting `test/*` TensorBoard scalars
+    # that harvest_metrics_from_tb prefers over `val/*` are therefore the
+    # selected checkpoint on the test split already.
+    #
+    # An earlier revision missed that and zeroed box_/seg_ mAP50/75/50_95 here so
+    # the COCOeval pass below would refill them. That silently moved the headline
+    # metric from upstream's torchmetrics to pycocotools -- a different
+    # implementation, different maxDets handling, different numbers -- to
+    # "correct" a value that was never wrong. Never swap the metric source to
+    # solve a checkpoint-selection problem; the two are independent.
+    #
+    # `model` DOES still hold the final epoch's weights, so the reload below is
+    # kept: the prediction dump, S/M/L, AR_100 and the SAM2 pass all derive from
+    # it and would otherwise describe the last epoch while the headline
+    # described the best checkpoint.
+    _bench_scored_best = False
+    if not args.inference_only:
+        _best_total = next((p for p in (PRIMARY / "checkpoint_best_total.pth",
+                                        RUN_DIR / "checkpoint_best_total.pth")
+                            if p.is_file()), None)
+        if _best_total is not None:
+            try:
+                model = ModelCls(pretrain_weights=str(_best_total))
+                _bench_scored_best = True
+                print(f"🏅 RF-DETR: predictions will come from the selected "
+                      f"checkpoint {_best_total.name}")
+            except Exception as _e_best:
+                print(f"⚠️ RF-DETR best-checkpoint reload failed ({_e_best}); "
+                      f"the predictions, S/M/L, AR_100 and SAM2 metrics are the "
+                      f"LAST epoch (the headline mAPs are unaffected)")
+        else:
+            print("⚠️ RF-DETR: no checkpoint_best_total.pth found; the predictions, "
+                  "S/M/L, AR_100 and SAM2 metrics are the LAST epoch, and the "
+                  "headline mAPs are whatever upstream's final eval scored")
+        if _bench_scored_best:
+            # The headline mAPs stay exactly as harvested: they are upstream's
+            # torchmetrics reading of this same checkpoint on the test split
+            # (see the block comment above). Only the predictions are rebuilt.
+            #
+            # A prediction artefact is never deleted (hard invariant); the
+            # last-epoch dump is parked so the regeneration guard below sees no
+            # file and rebuilds from the best checkpoint.
+            _last_pred = RUN_DIR / "predictions_test.json"
+            if _last_pred.is_file():
+                _parked = RUN_DIR / "predictions_test.last_epoch.json"
+                if not _parked.exists():
+                    _last_pred.rename(_parked)
+                    print(f"   📦 parked the last-epoch dump as {_parked.name}")
 
     # ---- Add S/M/L and AR_100 metrics via pycocotools ---------
     # RF-DETR's TensorBoard doesn't log S/M/L, so we compute them from a

@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Real-time-ish penguin video demo: RF-DETR-seg inference + ByteTrack + counting.
 
 Loads a fine-tuned RF-DETR-seg checkpoint, runs per-frame instance segmentation
@@ -11,7 +12,7 @@ just works.
 
 USAGE
     python penguin_video_demo.py \
-        --weights /home/vorse/bench_any/runs/segment/penguin-seg-combined_rf-detr-seg-large/checkpoint_best_total.pth \
+        --weights /home/user/bench_any/runs/segment/penguin-seg-combined_rf-detr-seg-large/checkpoint_best_total.pth \
         --video   /mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/demo_videos/penguin_underwater.mp4 \
         --out     ~/penguins/penguin_underwater_annotated.mp4 \
         --conf 0.35 --show
@@ -72,7 +73,7 @@ _try_link_qt_fonts()
 import cv2
 import numpy as np
 
-DEFAULT_WEIGHTS = "/home/vorse/bench_any/runs/segment/african-penguin_rf-detr-seg-xlarge_b1_e150_i640_be64_fair_grid/checkpoint_best_total.pth"
+DEFAULT_WEIGHTS = "/home/user/bench_any/runs/segment/african-penguin_rf-detr-seg-xlarge_b1_e150_i640_be64_fair_grid/checkpoint_best_total.pth"
 DEFAULT_VIDEO = "/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/demo_videos/penguin_underwater.mp4"
 
 # COCO-80 class names (index = class_id as emitted by RF-DETR's default COCO-pretrained

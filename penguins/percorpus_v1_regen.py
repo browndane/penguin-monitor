@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Regenerate tab:percorpus_v1 from artefacts that still exist on disk.
 
 WHY
@@ -57,7 +58,8 @@ METHODS = [("yolo11x_pred", "YOLOv11x-seg"),
            ("rtdetr_sam3_pred", "RT-DETR + SAM 3 box-prompt"),
            ("sam3_pred", "SAM 3 + sieve (zero-shot)")]
 
-# The cells currently in the paper, so the script can say whether it confirms them.
+# The cells the paper carried before 2026-07-30, superseded by this script's own output.
+# Kept so a re-run still reports how far the regenerated figures sit from the old ones.
 PAPER = {("PW", "yolo11x_pred"): 88.0, ("PW", "rtdetr_sam3_pred"): 89.4,
          ("PW", "sam3_pred"): 89.1,
          ("iNat", "yolo11x_pred"): 84.4, ("iNat", "rtdetr_sam3_pred"): 86.2,

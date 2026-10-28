@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """
 AP-Bench Experiment Runner
 ==========================
@@ -57,27 +58,30 @@ GAMMA = 0.25          # Density weight (Eq. 4)
 TAU_1 = 0.30          # Easy/Medium boundary (Eq. 5)
 TAU_2 = 0.58          # Medium/Hard boundary (Eq. 5)
 
-# Training hyperparameters (from paper Sec. 5.1)
+# Training hyperparameters, read off args.yaml of the scaling runs
+# african-penguin-inaturalist-sam-veryclean_yolo11{s,m,l}-seg_b0.98_e150_i640_be32_native_p1_repipeline.
+# Do NOT re-copy these from the paper: an earlier version of this block was transcribed from
+# Sec. 5.1 and described a run that never happened (cosine schedule, lr0 1e-3, mosaic 0.5).
 TRAIN_CONFIG = dict(
     optimizer='AdamW',
-    lr0=1e-3,
-    lrf=1e-3,      # min LR ratio for cosine schedule → effectively 1e-6
-    cos_lr=True,
-    batch=8,
+    lr0=1e-4,
+    lrf=0.01,
+    cos_lr=False,
+    batch=0.98,    # fractional = Ultralytics auto-batch
     imgsz=640,
     epochs=150,
     patience=15,
-    hsv_h=0.015,   # photometric: brightness ±30%, contrast ±20%
-    hsv_s=0.3,
-    hsv_v=0.3,
+    hsv_h=0.0,
+    hsv_s=0.0,
+    hsv_v=0.0,
     fliplr=0.5,
-    mosaic=0.5,
-    erasing=0.0,
-    scale=0.5,
+    mosaic=1.0,
+    erasing=0.05,
+    scale=0.2,
     translate=0.1,
-    workers=4,
+    workers=8,
     exist_ok=True,
-    cache=True,
+    cache=False,
 )
 
 # Active learning sample counts
@@ -746,10 +750,10 @@ def stratified_evaluation(predictions_json: str,
         coco_eval.summarize()
 
         results[tier_name] = {
-            'mAP50_95': float(coco_eval.stats[0]),    # mAP @ IoU=0.50:0.95
-            'mAP50': float(coco_eval.stats[1]),        # mAP @ IoU=0.50
-            'mAP75': float(coco_eval.stats[2]),        # mAP @ IoU=0.75
-            'recall': float(coco_eval.stats[8]),       # AR maxDet=100
+            'mAP50_95': max(0.0, float(coco_eval.stats[0])),    # mAP @ IoU=0.50:0.95
+            'mAP50': max(0.0, float(coco_eval.stats[1])),      # mAP @ IoU=0.50
+            'mAP75': max(0.0, float(coco_eval.stats[2])),      # mAP @ IoU=0.75
+            'recall': max(0.0, float(coco_eval.stats[8])),     # AR maxDet=100
             'instances': len(eval_ann_ids),
         }
 
@@ -1485,7 +1489,7 @@ def main():
                     break
             ms_per_img = measure_inference_time(weights) if weights and os.path.exists(weights) else 0
 
-            model_params = {'s': '11.2M', 'm': '20.1M', 'l': '25.3M'}
+            model_params = {'s': '10.1M', 'm': '22.4M', 'l': '27.6M'}
             table7_rows.append({
                 'Model': f'YOLOv11{variant}-seg',
                 'Params': model_params[variant],

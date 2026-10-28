@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Difficulty-stratify the SAM2-prompted masks (_bench_sam2_seg.json) per paradigm.
 
 Companion to difficulty_stratify_posthoc.py: that tool stratifies the NATIVE

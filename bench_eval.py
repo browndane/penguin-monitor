@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # Shared post-eval toolkit for bench_any.py and its *_any_tune.py wrappers.
 #
 # Goal: provide ONE framework-agnostic implementation of the metrics that every
@@ -410,6 +411,12 @@ def coco_eval(gt_json: str, pred_json: str, iou_type: str = "bbox",
             # Dense-image truncation is handled upstream by max_det=1000 in
             # .val() / inference calls, not here.
             ev.params.maxDets = [1, 10, 100]
+            # Fail loud if someone propagates MAX_DETS=[1,10,1000] (torchmetrics
+            # only) into COCOeval — _summarize(1) hard-codes maxDets=100, so its
+            # absence silently zeroes mAP50_95. Better a crash than a 0.0 headline.
+            assert list(ev.params.maxDets) == [1, 10, 100], (
+                f"ev.params.maxDets must be [1,10,100] (got {list(ev.params.maxDets)}); "
+                "MAX_DETS=[1,10,1000] is torchmetrics-only, never COCOeval.")
             ev.evaluate(); ev.accumulate(); ev.summarize()
             stats = list(ev.stats)
             ev_eval = ev.eval  # precision/recall arrays (filled by accumulate())
@@ -703,11 +710,14 @@ def stratified_coco_eval(gt_json: str, pred_json: str, difficulty_list: list,
             ev.evaluate()
             ev.accumulate()
             ev.summarize()
+            # Clamp pycocotools -1 (empty size/tier bucket) to 0 — matches
+            # the main coco_eval path at L429 so a tier with no GT/dets reads
+            # 0.0, not a negative that flips the Easy-Hard delta sign.
             results[tier_name] = {
-                "mAP50_95": float(ev.stats[0]),
-                "mAP50": float(ev.stats[1]),
-                "mAP75": float(ev.stats[2]),
-                "AR_100": float(ev.stats[8]),   # AR @ maxDet=100 (stats[8])
+                "mAP50_95": max(0.0, float(ev.stats[0])),
+                "mAP50": max(0.0, float(ev.stats[1])),
+                "mAP75": max(0.0, float(ev.stats[2])),
+                "AR_100": max(0.0, float(ev.stats[8])),
                 "instances": len(eval_ann_ids),
             }
         finally:
@@ -1107,7 +1117,7 @@ def sam2_seg_from_boxes(images_dir: str, bbox_pred_json: str,
     try:
         # Add SAM2 to Python path
         import sys
-        sam2_root = os.environ.get("SAM2_ROOT", "/home/vorse/sam2")
+        sam2_root = os.environ.get("SAM2_ROOT", "/home/user/sam2")
         if sam2_root not in sys.path:
             sys.path.insert(0, sam2_root)
 
@@ -1132,7 +1142,7 @@ def sam2_seg_from_boxes(images_dir: str, bbox_pred_json: str,
     # If sam2_cfg is absolute, convert to relative
     cfg_path = Path(sam2_cfg)
     if cfg_path.is_absolute():
-        # Extract relative path: /home/vorse/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml
+        # Extract relative path: /home/user/sam2/sam2/configs/sam2.1/sam2.1_hiera_l.yaml
         # becomes: sam2.1/sam2.1_hiera_l.yaml
         try:
             cfg_rel = str(cfg_path.relative_to(f"{sam2_root}/sam2/configs"))
@@ -1159,6 +1169,18 @@ def sam2_seg_from_boxes(images_dir: str, bbox_pred_json: str,
     for p in preds:
         by_image.setdefault(p["image_id"], []).append(p)
 
+    # All boxes of an image go through SAM2 in one prompt batch; chunked so a
+    # crowded image (hundreds of penguins) can't blow up decoder VRAM.
+    # cvBench speed port: BENCH_SAM2_BOX_CHUNK=64 batches the per-box prompt
+    # loop (was one predict() call per box in fp32). BENCH_SAM2_BF16=1 runs the
+    # prompt under autocast(bf16) — ~0.004 sam2_mAP50 cost, 3.85x on top of the
+    # batching (measured BASE 2.03s -> PORT 0.53s on 479 box prompts / 5 images,
+    # 479/479 masks, mAP parity). Set BENCH_SAM2_BF16=0 or BENCH_SAM2_BOX_CHUNK=1
+    # to restore the exact old per-box fp32 numbers.
+    import os as _os
+    chunk = int(_os.environ.get("BENCH_SAM2_BOX_CHUNK", "64"))
+    autocast = (device == "cuda") and _os.environ.get("BENCH_SAM2_BF16", "1") == "1"
+
     out_preds = []
     for iid, ps in by_image.items():
         fname = id_to_fname.get(iid)
@@ -1171,26 +1193,38 @@ def sam2_seg_from_boxes(images_dir: str, bbox_pred_json: str,
             img = _cv2.imread(str(img_path))
             if img is None: continue
             img = _cv2.cvtColor(img, _cv2.COLOR_BGR2RGB)
-            predictor.set_image(img)
+            with _t.inference_mode(), _t.autocast("cuda", dtype=_t.bfloat16, enabled=autocast):
+                predictor.set_image(img)
         except Exception as e:
             _warn(f"SAM2.set_image failed on {img_path.name}: {e}"); continue
-        for p in ps:
-            x, y, w, h = p["bbox"]
-            box = _np.array([x, y, x + w, y + h], dtype=_np.float32)
+        boxes = _np.array([[p["bbox"][0], p["bbox"][1],
+                            p["bbox"][0] + p["bbox"][2], p["bbox"][1] + p["bbox"][3]]
+                           for p in ps], dtype=_np.float32)
+        for i in range(0, len(ps), chunk):
+            blk, pblk = boxes[i:i + chunk], ps[i:i + chunk]
             try:
-                masks, scores, _ = predictor.predict(box=box[None, :], multimask_output=False)
+                with _t.inference_mode(), _t.autocast("cuda", dtype=_t.bfloat16, enabled=autocast):
+                    masks, _scores, _ = predictor.predict(box=blk, multimask_output=False)
             except Exception:
                 continue
             if masks is None or len(masks) == 0: continue
-            m = masks[0].astype(_np.uint8)
-            rle = _mu.encode(_np.asfortranarray(m))
-            rle["counts"] = rle["counts"].decode("ascii")
-            out_preds.append({"image_id": iid, "category_id": p["category_id"],
-                              "segmentation": rle, "score": float(p.get("score", 1.0))})
+            # predict() squeezes dim 0, so a single box returns (1,H,W) and N
+            # boxes return (N,1,H,W); one mask per box either way.
+            masks = _np.asarray(masks).reshape(-1, *_np.asarray(masks).shape[-2:])
+            for p, m in zip(pblk, masks):
+                rle = _mu.encode(_np.asfortranarray(m.astype(_np.uint8)))
+                rle["counts"] = rle["counts"].decode("ascii")
+                out_preds.append({"image_id": iid, "category_id": p["category_id"],
+                                  "segmentation": rle, "score": float(p.get("score", 1.0))})
     Path(out_json).parent.mkdir(parents=True, exist_ok=True)
     with open(out_json, "w") as fh:
         json.dump(out_preds, fh)
     # Run a segm COCOeval (it emits seg_* keys) and remap into the sam2_* family
     # so SAM2-prompted masks don't overwrite a model's native seg_* columns.
     seg_res = coco_eval(gt_json, out_json, "segm")
-    return {"sam2_" + k[len("seg_"):]: v for k, v in seg_res.items() if k in SEG_AP_KEYS}
+    sam2_res = {"sam2_" + k[len("seg_"):]: v for k, v in seg_res.items() if k in SEG_AP_KEYS}
+    # Guard the native-vs-prompted routing: every returned key must be sam2_*.
+    # A slip here lets a SAM2-prompted score masquerade as a native seg_* score.
+    assert all(k.startswith("sam2_") for k in sam2_res), (
+        f"sam2_seg_from_boxes must return only sam2_* keys; got {sorted(sam2_res)}")
+    return sam2_res

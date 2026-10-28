@@ -1,24 +1,29 @@
-# penguin-monitor
+# Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks: code
 
-Code and evaluation protocol for *Zero-Shot Penguin Instance Segmentation at Colony Scale: Foundation Models, Crowd-Sourced Agreement, and Expert-Time Reduction in Conservation Informatics*.
+Code and evaluation protocol for *Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks*, by Dane Brown and Karen Bradshaw, Department of Computer Science, Rhodes University. Submitted to Ecological Informatics.
 
-Dane Brown, Karen Bradshaw, Department of Computer Science, Rhodes University. Under review.
-Project page: https://browndane.github.io/penguin-monitor
+## Use of generative AI
+
+The authors wrote this code. Claude (Anthropic, Claude Code) refactored it, and every Python file carries a header line saying so. The authors reviewed the refactored code and take responsibility for it. Because of that header line, the line numbers in PATHS.md count it.
+
+## Paths and accounts
+
+Absolute paths in the code are written as `/home/user/...`, and PATHS.md lists each one. Edit them for your own machine. The Roboflow scripts name a placeholder workspace, `anonymous-workspace`, and need your own workspace and `ROBOFLOW_API_KEY`.
 
 ## What this is
 
-A zero-shot instance-segmentation pipeline for African Penguin colony imagery,
-and the benchmark it was measured with. A text-prompted foundation model runs
-once per image from the prompt "a penguin". A geometric sanity sieve filters the
-output by area, edge contact and dimension fraction. An optional agreement
-filter reuses the dot annotations left by Penguin-Watch citizen scientists. No
-curated training mask enters the zero-shot path.
+A geometric sieve and a citizen-science agreement filter that turn the raw masks of a
+text-prompted foundation model into penguin instance masks and counts, with the
+difficulty-stratified benchmark used to test them. The foundation model, SAM 3, runs
+once per image on the prompt "a penguin", with no training imagery. The sieve filters
+its output by area, edge contact and dimension fraction. The optional agreement
+filter keeps masks that Penguin-Watch citizen scientists clicked inside. The results
+are in the paper. The table further down maps each paper object to the script that
+produces it.
 
-The headline comparison is against six supervised configurations trained on the
-same data budget. Close to the training distribution the supervised models lead,
-75.2 against 69.0 aggregate mask mean average precision at overlap 0.5. On
-adversarial camera-trap imagery they collapse, one as far as 2.8, and the
-zero-shot pipeline holds at 38.7.
+## Data
+
+The `data/` folder holds the gold labels, model predictions, score files and the 123 Boulders Beach photographs. Its README maps each file to the table or figure it backs. SANParks data are held under permit and are not included.
 
 ## Layout
 
@@ -30,7 +35,8 @@ zero-shot pipeline holds at 38.7.
     *_any_tune.py           one training wrapper per framework
     penguins/               the P5 analysis scripts
     prep/                   corpus preparation and the evaluation producers
-    docs/                   the project page, plain HTML
+    fiftyone_yolo_active_learning.py  the sieve caller, with the relative border test as run
+    annotate/sam3_coco_annotator.py   the SAM 3 annotator behind the prompt sweeps
 
 ## Running the benchmark
 
@@ -56,11 +62,13 @@ set the multiprocessing start method to `spawn` before importing torch.
 | Fusion strategies | `penguins/fusion_strategies_sweep.py` | `fusion_sweep_results_<corpus>.txt` |
 | Annotation effort, mask IoU column | `penguins/mask_iou_routes.py`, `penguins/mask_iou_route2.py` | `mask_iou_routes.json` |
 | Corpus descriptors | `penguins/dataset_counts_audit.py` | `dataset_counts.json` |
-| Figures 1 to 3 | `penguins/p5_figures.py` | the PDFs and PNGs in the paper directory |
+| Fig. 2 and Fig. 3 | `penguins/p5_figures.py` | the PDFs and PNGs in the paper directory |
+| Fig. S1 | `penguins/plot_training_dynamics.py` | `fig4_training_dynamics.png` |
+| Fig. S2 | `penguins/fig_pr_overlay.py` | `fig_pr_overlay.png` |
 
 The mask IoU column is worth a note, because it is the one number in the paper
 that was recomputed rather than reproduced. Five defensible readings of "mean
-mask IoU against gold" were tried against the published column and none
+mask IoU against gold" were tried against an earlier draft's column and none
 reproduced it, so the column was recomputed under one stated protocol: the mean
 over gold instances, with a gold instance receiving no mask scored zero,
 averaged over the two corrected gold corpora. That protocol cannot be gamed by
@@ -76,9 +84,12 @@ already environment variables: `SAM2_ROOT` for the SAM 2 checkout and
 
 ## Data
 
-Gold corpora, the Penguin-Watch subsets and model weights are not in this
-repository. The corpus descriptors and counts are in `prep/` and
-`penguins/dataset_counts_audit.py`; contact the authors for access.
+The gold annotations, model predictions and score files for Boulders,
+iNaturalist and Penguin-Watch are in the companion data archive submitted
+with the article, `penguin_monitor_data_for_review.zip`, which has its
+own README. Images, model weights and the SANParks data are not included.
+The corpus descriptors and counts are in `prep/` and
+`penguins/dataset_counts_audit.py`.
 
 ## Licence
 

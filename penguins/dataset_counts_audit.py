@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Producing artefact for P5's tab:datasets corpus descriptors.
 
 WHY
@@ -93,7 +94,7 @@ def main():
                        "older_sanparks_dir": n_images(PENGUIN / "SANParks")}
     demo = PENGUIN / "demo_videos"
     res["boulders"] = {"gold_v2_images": n_images(PENGUIN / "boulders-penguin"),
-                       "source_stills_karen": n_images(PENGUIN / "Karen"),
+                       "source_stills_partner": n_images(PENGUIN / "Partner"),
                        "demo_video_frames": {f.name: video_frames(f)
                                              for f in sorted(demo.glob("*.mp4"))}}
     res["boulders"]["demo_video_frames_total"] = sum(
@@ -119,7 +120,7 @@ def main():
          f"| SANParks v2 gold | {sp['gold_v2_images']} | - | matches the results tables |\n",
          f"| SANParks evaluated | 51 in the v2 gold | 612 | no artefact |\n",
          f"| Boulders v2 gold | {bl['gold_v2_images']} | - | matches the results tables |\n",
-         f"| Boulders source stills | {bl['source_stills_karen']} | - | Karen/BouldersBeachDec25 |\n",
+         f"| Boulders source stills | {bl['source_stills_partner']} | - | Partner/BouldersBeachDec25 |\n",
          f"| Boulders video frames on disk | {bl['demo_video_frames_total']} across "
          f"{len(bl['demo_video_frames'])} clips | ~5200 | contradicted |\n",
          "\nThe evaluated counts 1650, 1124 and 612 correspond to nothing on disk and to no "

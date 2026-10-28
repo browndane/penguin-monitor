@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Unit tests for penguins/difficulty_stratify_posthoc.py.
 
 Run: ~/cvML/bin/python penguins/test_difficulty_stratify_posthoc.py
@@ -76,9 +77,16 @@ class TestRankCandidate(unittest.TestCase):
 # nms_free_for_tag
 # ---------------------------------------------------------------------------
 class TestNmsFreeForTag(unittest.TestCase):
-    def test_yolo_is_nms_based(self):
+    def test_yolo11_is_nms_based(self):
         self.assertFalse(nms_free_for_tag("yolo11x-seg"))
-        self.assertFalse(nms_free_for_tag("yolo26x-seg"))
+        self.assertFalse(nms_free_for_tag("yolo11s-seg"))
+
+    def test_yolo26_is_nms_free(self):
+        # ultralytics/cfg/models/26/yolo26-seg.yaml sets ``end2end: True``, so
+        # YOLOv26 runs no suppression. The longer "yolo26" prefix must win over
+        # the "yolo" one.
+        self.assertTrue(nms_free_for_tag("yolo26x-seg"))
+        self.assertTrue(nms_free_for_tag("yolo26s-seg"))
 
     def test_nms_free_paradigms(self):
         self.assertTrue(nms_free_for_tag("rtdetr-3"))

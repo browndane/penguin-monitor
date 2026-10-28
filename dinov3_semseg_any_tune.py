@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # Wraps Raessan/semantic_segmentation_dinov3 (lightweight ASPP head on a frozen DINOv3
 # backbone, semantic seg). Mirrors yolo_any_tune.py CLI.
 # USAGE: python3 dinov3_semseg_any_tune.py --data /path/to/dataset --epochs 20 --batch_sz 8 --model dinov3-semseg-vits16plus
@@ -310,8 +311,11 @@ def main():
             print(f"[bench_any] dinov3_semseg shared aug applied (policy={_BENCH_AUG_POLICY})")
         except Exception as _e:
             print(f"[bench_any] dinov3_semseg shared aug unavailable: {_e}")
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.threads, shuffle=True)
-    val_loader   = DataLoader(val_set,   batch_size=args.batch_size, num_workers=args.threads, shuffle=False)
+    # `--threads 0` means auto (see yolo_any_tune.py); -1 forces 0 workers.
+    # cvBench speed port.
+    workers = 0 if args.threads < 0 else (args.threads or min(8, os.cpu_count() or 8))
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=workers, shuffle=True)
+    val_loader   = DataLoader(val_set,   batch_size=args.batch_size, num_workers=workers, shuffle=False)
     NC = len(train_set.class_names)
 
     dino = torch.hub.load(repo_or_dir=cfg.DINOV3_DIR, model=cfg.DINO_MODEL,
@@ -652,7 +656,7 @@ if __name__ == "__main__":
         print("   The available local weights decide which semseg aliases can run.")
         print("   For gated Meta DINOv3 weights, download from "
               "https://ai.meta.com/resources/models-and-libraries/dinov3-downloads/ and place the "
-              f"file in /home/vorse/bench_any/dinov3_weights/ as {DINO_MODEL}*.pth, or pass "
+              f"file in /home/user/bench_any/dinov3_weights/ as {DINO_MODEL}*.pth, or pass "
               "--dinov3_weights /full/path/to/file.pth.")
         print("   Use a dinov3-semseg-* alias whose backbone is listed above, or pass "
               "--dinov3_weights directly.")
@@ -660,7 +664,12 @@ if __name__ == "__main__":
     print(f"✅ Using DINOv3 weights: {DINOV3_WEIGHTS}")
     print(f"🔗 Using DINOv3 torch.hub source: {DINOV3_DIR}")
 
-    bs = max(1, int(args.batch_sz)) if args.batch_sz >= 1 else 1
+    if args.batch_sz < 1:
+        print(f"❌ --batch_sz must be >= 1 (got {args.batch_sz}). DINOv3-SemSeg truncates a "
+              f"fractional --batch_sz to int(0)=0 and silently runs a zero-batch train. "
+              f"Pass an explicit integer micro-batch, e.g. --batch_sz 4.")
+        sys.exit(1)
+    bs = max(1, int(args.batch_sz))
     patch_config(REPO_DIR, COCO_ROOT, bs, args.lr, args.epochs,
                  DINOV3_DIR, DINOV3_WEIGHTS, DINO_MODEL)
 

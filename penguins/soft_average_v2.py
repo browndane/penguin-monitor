@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Soft-average fusion on the CORRECTED soft-logit run (prep_11b v2).
 
 Supersedes soft_average_only.py, which ran against the defective soft files and

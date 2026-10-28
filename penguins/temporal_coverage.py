@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """
 temporal_coverage.py — Obj 4 Phase 0 temporal-coverage checker (CJS feasibility gate).
 
@@ -16,7 +17,7 @@ training, no orchestrator, no `~/bench_any/runs/` writes.
 
 Usage:
     ~/cvML/bin/python penguins/temporal_coverage.py --dataset <dir> [--camera-subdirs] [--json]
-    ~/cvML/bin/python penguins/temporal_coverage.py --dataset /mnt/.../RhodesPenguin --camera-subdirs
+    ~/cvML/bin/python penguins/temporal_coverage.py --dataset /mnt/.../CampusPenguin --camera-subdirs
 
 Exit codes: 0 = tool ran (see verdict in output); 1 = dataset dir not found; 2 = no images with EXIF.
 """
@@ -164,7 +165,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("--dataset", required=True, help="dataset root dir to scan")
     ap.add_argument("--camera-subdirs", action="store_true",
-                    help="treat top-level subdirs as camera locations (RhodesPenguin layout)")
+                    help="treat top-level subdirs as camera locations (CampusPenguin layout)")
     ap.add_argument("--json", action="store_true", help="emit the report as JSON on stdout")
     ap.add_argument("--no-recursive", action="store_true",
                     help="scan only the top level (not subdirs)")

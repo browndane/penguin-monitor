@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """
 Sanity sieve for raw SAM-3 candidate masks in dense penguin colonies.
 ====================================================================
 
 Three geometric tests, applied *before* class-agnostic NMS so nonsense masks cannot
-suppress real ones via IoU overlap. Spec: Elsevier *Ecological Informatics* draft,
-``elsarticle-template-harv.tex`` §ssec:sieve (lines ~220-238).
+suppress real ones via IoU overlap. Spec: the manuscript draft,
+section on the sanity sieve.
 
 Failure modes targeted (verbatim from the draft):
   * Hyper-fragmented masks   -- mask pieces too small to correspond to a real penguin
@@ -17,11 +18,22 @@ Failure modes targeted (verbatim from the draft):
 Tests (a mask is REJECTED iff any holds):
   1. Area:                  area < A_min,                 A_min = 324 px (18 x 18).
   2. Dimension-fraction:     max-dim fraction rho >= rho_max,   rho_max = 1.0
-                            (a mask that spans the whole of one bbox dimension is a
-                             strip / merge artefact).
+                            (spec; the constant RHO_MAX was tightened to 0.9 below --
+                             see the reject_dimension docstring). A mask that spans
+                             nearly the whole of one bbox dimension is a strip / merge
+                             artefact.
   3. Edge-stub:             within 4 px of image border AND area < 8 * A_min.
                             This kills sub-flipper stubs without penalising legitimate
                              edge penguins that happen to touch the border.
+
+Test 3 has a second, selectable form. Set ``edge_rule="relsize"`` and a border-touching
+mask is rejected when its area falls under half the median area of that image's
+interior detections, the strip-transect half-in convention made adaptive. It carries no
+pixel constant, so it transfers across corpora of different resolution. ``edge_rule``
+defaults to "stub", the published rule, which is kept for comparison; "none" disables
+test 3 outright. Measured on Boulders Beach, the relative-size rule lifts precision from
+0.8396 to 0.9017 and cuts count error from 0.8049 to 0.5041 while the published rule
+removes nothing at all (`penguins/sieve_composition.py`, 2026-08-05).
 
 After sieving, class-agnostic NMS at IoU 0.55 deduplicates the surviving boxes.
 
@@ -41,6 +53,9 @@ RHO_MAX: float = 0.9          # dimension-fraction threshold (tightened from 1.0
 EDGE_BORDER: float = 4.0      # px -- "within 4 px of image border"
 EDGE_STUB_AREA_K: float = 8.0  # reject if area < K * A_min near the border
 NMS_IOU: float = 0.55         # class-agnostic NMS threshold (post-sieve)
+EDGE_RELSIZE_K: float = 0.5   # relative-size edge rule: reject a border-touching
+                              # mask under K * the median interior-detection area
+EDGE_RULE: str = "stub"       # which edge test test 3 runs: "stub", "relsize", "none"
 
 
 @dataclass
@@ -153,6 +168,15 @@ def reject_dimension(bbox: Tuple[int, int, int, int], img_wh: Tuple[int, int],
     return rho >= rho_max
 
 
+def touches_border(bbox: Tuple[int, int, int, int], img_wh: Tuple[int, int],
+                   border: float = EDGE_BORDER) -> bool:
+    """True if the box comes within ``border`` px of any image edge."""
+    x1, y1, x2, y2 = bbox
+    img_w, img_h = img_wh
+    return (x1 < border or y1 < border or
+            x2 > (img_w - 1) - border or y2 > (img_h - 1) - border)
+
+
 def reject_edge_stub(bbox: Tuple[int, int, int, int], img_wh: Tuple[int, int],
                      area: int, a_min: float = A_MIN,
                      border: float = EDGE_BORDER,
@@ -174,6 +198,58 @@ def reject_edge_stub(bbox: Tuple[int, int, int, int], img_wh: Tuple[int, int],
     return area < area_k * a_min
 
 
+def reject_edge_relsize(bbox: Tuple[int, int, int, int], img_wh: Tuple[int, int],
+                        area: int, median_interior_area: float,
+                        border: float = EDGE_BORDER,
+                        k: float = EDGE_RELSIZE_K) -> bool:
+    """Test 3, relative-size variant: reject a border-touching mask that is small
+    *for its own image*.
+
+    The strip-transect half-in convention, made adaptive. A mask within ``border``
+    px of an edge is rejected when its area falls under ``k`` times the median area
+    of that image's interior detections. Scale-free, so it needs no per-corpus
+    pixel constant. With no interior detection to calibrate against the rule
+    abstains and the mask is kept.
+    """
+    x1, y1, x2, y2 = bbox
+    if x2 < x1 or y2 < y1:
+        return True
+    if not touches_border(bbox, img_wh, border):
+        return False
+    return median_interior_area > 0 and area < k * median_interior_area
+
+
+def _reject_edge(edge_rule: str, bbox: Tuple[int, int, int, int],
+                 img_wh: Tuple[int, int], area: int, a_min: float, border: float,
+                 area_k: float, median_interior_area: float,
+                 relsize_k: float) -> bool:
+    """Dispatch test 3 to whichever edge rule is selected."""
+    if edge_rule == "none":
+        return False
+    if edge_rule == "stub":
+        return reject_edge_stub(bbox, img_wh, area, a_min, border, area_k)
+    if edge_rule == "relsize":
+        return reject_edge_relsize(bbox, img_wh, area, median_interior_area,
+                                   border, relsize_k)
+    raise ValueError(f"unknown edge_rule {edge_rule!r}")
+
+
+def median_interior_area(bboxes: List[Tuple[int, int, int, int]],
+                         areas: List[int], img_wh: Tuple[int, int],
+                         border: float = EDGE_BORDER) -> float:
+    """Median area of the detections that do not touch the border, 0.0 if none.
+
+    This is the image-level quantity the relative-size edge rule calibrates
+    against, so it has to be computed over all of one image's detections before
+    any per-mask decision is taken.
+    """
+    interior = [float(a) for bb, a in zip(bboxes, areas)
+                if bb[0] >= 0 and not touches_border(bb, img_wh, border)]
+    if not interior:
+        return 0.0
+    return float(np.median(interior))
+
+
 def mask_passes(mask: np.ndarray | None,
                 img_wh: Tuple[int, int],
                 bbox: Tuple[int, int, int, int] | None = None,
@@ -181,12 +257,19 @@ def mask_passes(mask: np.ndarray | None,
                 a_min: float = A_MIN,
                 rho_max: float = RHO_MAX,
                 border: float = EDGE_BORDER,
-                area_k: float = EDGE_STUB_AREA_K) -> bool:
+                area_k: float = EDGE_STUB_AREA_K,
+                edge_rule: str = EDGE_RULE,
+                med_interior: float = 0.0,
+                relsize_k: float = EDGE_RELSIZE_K) -> bool:
     """Return True iff a single mask survives all three sieve tests.
 
     ``img_wh`` is (width, height) of the source image. Pass a dense ``mask`` for the
     tightest geometry; if only a ``bbox`` (+ optional ``area``) is available, the
     tests run on the box (conservatively -- rejects more, safe for a sieve).
+
+    ``edge_rule`` selects test 3. Under "relsize" the caller must supply
+    ``med_interior`` from `median_interior_area` over the whole image, since that
+    rule is image-relative and cannot be decided from one mask alone.
     """
     bb = _bbox_from_any(mask, bbox)
     if bb[0] < 0:
@@ -196,7 +279,8 @@ def mask_passes(mask: np.ndarray | None,
         return False
     if reject_dimension(bb, img_wh, rho_max):
         return False
-    if reject_edge_stub(bb, img_wh, a, a_min, border, area_k):
+    if _reject_edge(edge_rule, bb, img_wh, a, a_min, border, area_k,
+                    med_interior, relsize_k):
         return False
     return True
 
@@ -260,12 +344,19 @@ def sieve_masks(masks: List[np.ndarray | None],
                 area_k: float = EDGE_STUB_AREA_K,
                 nms_iou: float = NMS_IOU,
                 apply_nms: bool = True,
+                edge_rule: str = EDGE_RULE,
+                relsize_k: float = EDGE_RELSIZE_K,
                 ) -> Tuple[List[int], SieveStats]:
     """Run the full sieve over one image's masks.
 
     Each entry in ``masks`` is a 2-D array (or None if only a bbox is available).
     ``bboxes`` / ``areas`` are optional per-mask accompaniments. ``scores`` are the
     detector's confidence scores, used only for NMS ordering.
+
+    ``edge_rule`` swaps test 3 between the published edge-stub rule ("stub", the
+    default, so behaviour is unchanged), the scale-free relative-size rule
+    ("relsize") and no edge test at all ("none"). The relative-size median is
+    computed here, over this image's detections, before any mask is judged.
 
     Returns (kept_indices, stats). ``kept_indices`` are indices into the input
     lists, in the order they survive (NMS order if ``apply_nms`` else input order).
@@ -278,6 +369,13 @@ def sieve_masks(masks: List[np.ndarray | None],
     if scores is None:
         scores = [0.0] * n
     stats = SieveStats(n_in=n)
+
+    med_interior = 0.0
+    if edge_rule == "relsize":
+        res_bbs = [_bbox_from_any(m, bb) for m, bb in zip(masks, bboxes)]
+        res_areas = [_area_from_any(m, bb, ar)
+                     for m, bb, ar in zip(masks, bboxes, areas)]
+        med_interior = median_interior_area(res_bbs, res_areas, img_wh, border)
 
     survivors: List[int] = []
     for idx, (m, bb, ar) in enumerate(zip(masks, bboxes, areas)):
@@ -296,7 +394,8 @@ def sieve_masks(masks: List[np.ndarray | None],
         if reject_dimension(resolved_bb, img_wh, rho_max):
             stats.n_reject_dim += 1
             continue
-        if reject_edge_stub(resolved_bb, img_wh, a, a_min, border, area_k):
+        if _reject_edge(edge_rule, resolved_bb, img_wh, a, a_min, border, area_k,
+                        med_interior, relsize_k):
             stats.n_reject_edge += 1
             continue
         survivors.append(idx)
@@ -315,7 +414,9 @@ def sieve_masks(masks: List[np.ndarray | None],
 
 __all__ = [
     "A_MIN", "RHO_MAX", "EDGE_BORDER", "EDGE_STUB_AREA_K", "NMS_IOU",
+    "EDGE_RELSIZE_K", "EDGE_RULE",
     "SieveStats", "reject_area", "reject_dimension", "reject_edge_stub",
+    "reject_edge_relsize", "touches_border", "median_interior_area",
     "mask_passes", "class_agnostic_nms", "sieve_masks",
 ]
 
@@ -339,6 +440,7 @@ def _cli_main() -> None:
             --gt          ~/bench_any/runs/segment/<run>/_bench_gt_coco.json \
             --out         /tmp/preds_sieved.json \
             [--a-min 324 --rho-max 0.9 --nms-iou 0.5 --no-nms --out-stats s.csv]
+            [--edge-rule stub|relsize|none --relsize-k 0.5]
     """
     import argparse
     import csv
@@ -363,6 +465,11 @@ def _cli_main() -> None:
     ap.add_argument("--nms-iou", type=float, default=NMS_IOU,
                      help=f"NMS IoU threshold (default {NMS_IOU}).")
     ap.add_argument("--no-nms", action="store_true", help="Skip class-agnostic NMS after sieve.")
+    ap.add_argument("--edge-rule", choices=("stub", "relsize", "none"), default=EDGE_RULE,
+                    help=f"Which form of test 3 to run (default {EDGE_RULE}).")
+    ap.add_argument("--relsize-k", type=float, default=EDGE_RELSIZE_K,
+                    help=f"Relative-size edge threshold, fraction of the median "
+                         f"interior area (default {EDGE_RELSIZE_K}).")
     args = ap.parse_args()
 
     preds = json.loads(Path(args.predictions).read_text())
@@ -409,7 +516,8 @@ def _cli_main() -> None:
             scores.append(float(p.get("score", 0.0)))
         kept_idx, stats = sieve_masks(masks, img_wh=wh, scores=scores, bboxes=bboxes,
                                       a_min=args.a_min, rho_max=args.rho_max,
-                                      nms_iou=args.nms_iou, apply_nms=not args.no_nms)
+                                      nms_iou=args.nms_iou, apply_nms=not args.no_nms,
+                                      edge_rule=args.edge_rule, relsize_k=args.relsize_k)
         for i in kept_idx:
             kept_preds.append(plist[i])
         n_in_total += stats.n_in

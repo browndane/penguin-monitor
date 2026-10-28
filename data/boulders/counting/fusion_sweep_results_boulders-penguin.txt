@@ -1,0 +1,27 @@
+
+## 20. Multi-strategy prompt-fusion sweep, corrected inputs — boulders-penguin (tier-mean mAP, 2026-07-29)
+
+
+Strategies: union, consensus, mask_union, mask_intersection, mask_majority, soft_average. tau=0.5 (box-IoU). Soft-average available. Single 'a_penguin' is baseline. Hybrid: unmatched single-prompt detections pass through (except pure consensus).
+
+### Boulders (baseline single @ chosen: E=98.0 M=85.6 H=23.3 agg50=69.0 | agg5095=63.66)
+
+| strategy | E50 | M50 | H50 | agg50 | E5095 | M5095 | H5095 | agg5095 | best cfg |
+|---|---|---|---|---|---|---|---|---|---|
+| union | 98.1 | 85.6 | 25.0 | 69.6 | 97.2 | 78.1 | 16.9 | 64.05 | ma32n0.8d0.9s0.25 |
+| consensus | 98.1 | 85.6 | 25.1 | 69.6 | 97.2 | 77.9 | 16.9 | 63.98 | ma32n0.8d0.9s0.25 |
+| mask_union | 98.1 | 86.8 | 25.7 | 70.2 | 97.3 | 79.5 | 17.9 | 64.89 | ma32n0.9d0.9s0.25 |
+| mask_intersection | 98.1 | 86.9 | 25.7 | 70.2 | 96.8 | 79.1 | 18.0 | 64.61 | ma32n0.9d0.9s0.25 |
+| mask_majority | 98.1 | 86.8 | 25.7 | 70.2 | 97.0 | 79.4 | 18.1 | 64.83 | ma32n0.9d0.9s0.25 |
+| soft_average | 98.1 | 86.8 | 25.7 | 70.2 | 97.0 | 79.5 | 18.0 | 64.83 | ma32n0.9d0.9s0.25 |
+
+### Summary
+
+| corpus | strategy | agg50 | agg5095 |
+|---|---|---|---|
+| Boulders | union | 69.6 | 64.05 |
+| Boulders | consensus | 69.6 | 63.98 |
+| Boulders | mask_union | 70.2 | 64.89 |
+| Boulders | mask_intersection | 70.2 | 64.61 |
+| Boulders | mask_majority | 70.2 | 64.83 |
+| Boulders | soft_average | 70.2 | 64.83 |

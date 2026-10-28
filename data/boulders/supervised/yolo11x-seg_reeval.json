@@ -1,0 +1,11 @@
+{
+ "ckpt_tag": "yolo11x-seg",
+ "corpus": "boulders",
+ "easy": 84.16409624280928,
+ "medium": 49.98435847752771,
+ "hard": 9.446826220716172,
+ "agg": 47.865093647017716,
+ "recall": 0.6931,
+ "paper_in_dist_mAP50": 0.581,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers"
+}

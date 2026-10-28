@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Ground-truth annotation scaffolder for the penguin field-video clips.
 
 WHY THIS EXISTS
 ---------------
-The 4th paper (difficulty-stratified multi-animal tracking on dense penguin
+Follow-up work (difficulty-stratified multi-animal tracking on dense penguin
 video) needs per-frame ground truth: object count, bounding boxes, and
 persistent identities, on at least one clip (the easy 2-penguin clip is the
 cleanest case, ~50-100 frames). The demo (`penguin_video_demo.py`) currently

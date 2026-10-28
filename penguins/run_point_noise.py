@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Run point_noise_study on boulders gold, then write FINDINGS section 16 + sentinel.
 
 Self-reporting: runs the harness, reads its CSV, appends a summary table to

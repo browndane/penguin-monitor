@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Declarative model routing for bench_any.py.
 
 Add new benchmark families here instead of editing the orchestrator loop. The

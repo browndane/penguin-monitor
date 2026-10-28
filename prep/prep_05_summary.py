@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Script 5: Print tight summary of all 3 output datasets from their manifests.
 Run after scripts 1-4 complete. Reads manifests only, no filesystem walk.
 """

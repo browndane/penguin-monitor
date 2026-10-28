@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Obj-2: SAM2-prompted COUNT comparison on iNat test, per density bucket.
 
 Uses the SAM2-prompted masks already on disk (sam3_sam2refine/sam2_masks.json,

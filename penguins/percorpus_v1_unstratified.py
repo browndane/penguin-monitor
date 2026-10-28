@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Test whether tab:percorpus_v1's published cells are an un-stratified aggregate.
 
 WHY

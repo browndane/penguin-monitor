@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase 1 prep_09 (file-based): compute paper difficulty tiers (L170-179) for a YOLO
 gold corpus -> SIDECAR JSON manifest WITH gold RLEs.
 

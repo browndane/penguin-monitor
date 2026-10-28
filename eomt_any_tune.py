@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # Wraps tue-mps/eomt (Encoder-only Mask Transformer, CVPR'25, instance seg with a
 # DINOv3 backbone). Mirrors yolo_any_tune.py CLI.
 # USAGE: python3 eomt_any_tune.py --data /path/to/dataset --epochs 12 --batch_sz 4 --model eomt-large
@@ -365,7 +366,7 @@ def ensure_repo():
     _patch_upstream_max_detections(REPO_CACHE)
     _patch_upstream_vit(REPO_CACHE)
     has_native = _has_native_lightning()
-    if not has_native: print("ℹ️  using `pytorch_lightning` aliased as `lightning`")
+    if not has_native: print("ℹ  using `pytorch_lightning` aliased as `lightning`")
     return REPO_CACHE, has_native
 
 
@@ -480,7 +481,7 @@ def _preserve_trained_ckpt(run_dir):
     return str(dst)
 
 
-def write_yaml(path, data_path, num_classes, backbone_id, max_epochs, imgsz, batch_sz, lr, num_workers, run_name, run_dir, grad_accum_steps=1):
+def write_yaml(path, data_path, num_classes, backbone_id, max_epochs, imgsz, batch_sz, lr, num_workers, run_name, run_dir, grad_accum_steps=1, patience=15):
     # --- CRITICAL: scrub stale Lightning artefacts before writing config ---
     # Without this, Lightning's CSVLogger auto-increments version_0 -> version_N
     # and EoMT's post-eval may load a previous run's checkpoint trained with
@@ -533,6 +534,39 @@ def write_yaml(path, data_path, num_classes, backbone_id, max_epochs, imgsz, bat
                         "every_n_epochs": 1,
                         "monitor": None,
                         "filename": "epoch{epoch}-step{step}",
+                    },
+                },
+                # bench_any: a SECOND, monitored checkpoint. The one above has
+                # monitor=None, so its save_top_k=1 selects nothing — it is a
+                # rolling last, which is why EoMT's reported mAP was whatever
+                # the final evaluated epoch happened to be while yolo and rtdetr
+                # report their best.pt. This one selects on the same mask AP the
+                # bench publishes (column verified present in metrics.csv), and
+                # _bench_best.ckpt is what the post-train validate pass scores.
+                {
+                    "class_path": "lightning.pytorch.callbacks.ModelCheckpoint",
+                    "init_args": {
+                        "save_last": False,
+                        "save_top_k": 1,
+                        "monitor": "metrics/val_ap_all",
+                        "mode": "max",
+                        "filename": "_bench_best",
+                        "enable_version_counter": False,
+                    },
+                },
+                # bench_any: wire --patience (was a dead arg). Lightning
+                # EarlyStopping fires on metrics/val_ap_all, the same monitor as
+                # the _bench_best checkpoint above. EoMT validates ~6×/150ep, so
+                # patience 15 is a safety net that never trips in practice (needs
+                # 15 non-improving validations); it makes the CLI honest without
+                # changing the full-budget run that the 0.831 headline needs.
+                {
+                    "class_path": "lightning.pytorch.callbacks.EarlyStopping",
+                    "init_args": {
+                        "monitor": "metrics/val_ap_all",
+                        "mode": "max",
+                        "patience": int(patience),
+                        "check_finite": True,
                     },
                 },
             ],
@@ -953,6 +987,15 @@ if __name__ == "__main__":
     ap.add_argument("--sam2_ckpt", default=os.environ.get("SAM2_CKPT", ""))
     ap.add_argument("--sam2_config", default=os.environ.get("SAM2_CONFIG", ""))
     args = ap.parse_args()
+    # R.6: reject fractional --batch_sz loudly. The Ultralytics-style fractional
+    # auto-batch (0<bs<1) does NOT apply to EoMT; a fraction silently becomes the
+    # variant auto-size (int(0.98)=0 would zero-batch), so refuse it upfront
+    # rather than let a miscaled run train on empty batches. 0 (the default) is
+    # the explicit "auto-size to the EoMT variant" sentinel and stays valid.
+    if 0 < args.batch_sz < 1:
+        print(f"❌ --batch_sz must be 0 (auto) or >= 1 (got {args.batch_sz}); "
+              "fractional batch_sz is Ultralytics-only and would silently mis-size EoMT")
+        sys.exit(1)
     if args.repo_dir: REPO_CACHE = Path(args.repo_dir).expanduser().resolve()
     if args.hub_token: os.environ["HF_TOKEN"] = args.hub_token
 
@@ -1037,9 +1080,12 @@ if __name__ == "__main__":
     trained_ckpt = _preserve_trained_ckpt(RUN_DIR) if args.inference_only else None
     write_yaml(YAML_PATH, ZIPS_DIR, NUM_CLASSES, backbone_id,
                max_epochs=args.epochs, imgsz=args.imgsz,
-               batch_sz=MICRO_BS, lr=args.lr, num_workers=args.threads,
+               batch_sz=MICRO_BS, lr=args.lr,
+               num_workers=(0 if args.threads < 0
+                            else (args.threads or min(8, os.cpu_count() or 8))),
                run_name=RUN_NAME, run_dir=RUN_DIR,
-               grad_accum_steps=GRAD_ACCUM)
+               grad_accum_steps=GRAD_ACCUM,
+               patience=args.patience)
 
     LAUNCHER = RUN_DIR / "_launch.py"
     write_launcher(LAUNCHER, REPO_DIR, NUM_CLASSES, HAS_NATIVE_LIGHTNING,
@@ -1086,19 +1132,48 @@ if __name__ == "__main__":
         "💡 Tip: For seamless cloud logging",
         "💡 Tip: For seamless cloud uploads",
     )
-    proc = subprocess.Popen(
-        cmd, cwd=str(REPO_DIR), env=env,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        text=True, bufsize=1,
-    )
-    assert proc.stdout is not None
-    for line in proc.stdout:
-        if any(part in line for part in quiet_parts):
-            continue
-        print(line, end="")
-    rc = proc.wait()
+    def _run_child(child_cmd):
+        proc = subprocess.Popen(
+            child_cmd, cwd=str(REPO_DIR), env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, bufsize=1,
+        )
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            if any(part in line for part in quiet_parts):
+                continue
+            print(line, end="")
+        return proc.wait()
+
+    rc = _run_child(cmd)
     if rc != 0: print(f"⚠️ EoMT rc={rc}; harvesting whatever's available")
     else: print(f"✓ EoMT subprocess completed successfully")
+
+    # ---- Score the SELECTED checkpoint, not the last epoch ----------------
+    # Lightning calls the eval hook from inside the training loop, so a `fit`
+    # run leaves metrics.csv ending on whatever epoch was evaluated last. yolo
+    # and rtdetr both publish their best.pt, so publishing EoMT's last epoch
+    # made the bench comparison unfair. The monitored ModelCheckpoint injected
+    # in write_config selects on metrics/val_ap_all; re-validating from it here
+    # writes a fresh version_N/metrics.csv (which harvest_metrics already
+    # prefers) and re-fires the pred-dump patch, so predictions.json comes from
+    # the same weights as the published number.
+    if subcmd == "fit" and rc == 0:
+        _best_ckpts = sorted(RUN_DIR.rglob("_bench_best*.ckpt"),
+                             key=lambda p: p.stat().st_mtime, reverse=True)
+        if _best_ckpts:
+            _best = _best_ckpts[0]
+            print(f"🏅 EoMT: re-validating the selected checkpoint {_best.name}")
+            _vcmd = [sys.executable, str(LAUNCHER), "validate", "-c", str(YAML_PATH)]
+            if not args.compile: _vcmd.append("--compile_disabled")
+            _vcmd += ["--ckpt_path", str(_best)]
+            _vrc = _run_child(_vcmd)
+            if _vrc != 0:
+                print(f"⚠️ EoMT best-checkpoint validate rc={_vrc}; the harvested "
+                      f"metrics fall back to the LAST evaluated epoch")
+        else:
+            print("⚠️ EoMT: no monitored _bench_best*.ckpt found; the harvested "
+                  "metrics are the LAST evaluated epoch, not the selected checkpoint")
 
     metrics = harvest_metrics(RUN_DIR)
 
@@ -1115,7 +1190,7 @@ if __name__ == "__main__":
             _fps = float(_fps_data.get("fps_eval", 0.0))
             if _fps > 0:
                 metrics["fps_eval"] = _fps
-                print(f"   ⏱️  fps_eval = {_fps:.2f} (over {_fps_data.get('n_imgs', '?')} test imgs)")
+                print(f"   ⏱  fps_eval = {_fps:.2f} (over {_fps_data.get('n_imgs', '?')} test imgs)")
     except Exception as _e:
         print(f"   ⚠️ fps_eval read failed: {_e}")
 

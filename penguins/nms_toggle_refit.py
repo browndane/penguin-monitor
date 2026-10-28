@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase C2: controlled NMS toggle on a single trained YOLOv11x-seg checkpoint.
 
 The CrossParadigm paper (P1) claims that "removing non-maximum-suppression dampens
@@ -34,7 +35,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-BENCH = "/home/vorse/bench_any/runs"
+BENCH = "/home/user/bench_any/runs"
 RUN_DIR = f"{BENCH}/segment/african-penguin_yolo11x-seg_b0.98_e150_i640_be64_fair_grid"
 CKPT = f"{RUN_DIR}/weights/best.pt"
 # Shared 856-image GT (cat_id=1).

@@ -1,0 +1,4539 @@
+{
+ "corpus": "boulders",
+ "n_images": 123,
+ "n_gt_instances": 769,
+ "gt_path": "/home/user/bench_any/runs/obj2_counting/sam2refine_boulders-penguin/gt_coco.json",
+ "img_dir": "data/boulders-penguin/train/images",
+ "conf": {
+  "yolo11x-seg": 0.001,
+  "rtdetr-3": 0.25,
+  "rf-detr-seg-large": 0.01
+ },
+ "nms_on_iou": 0.7,
+ "nms_off_iou": 1.0,
+ "iou_match": 0.5,
+ "metric": "greedy IoU-0.5 precision/recall; count_MAE = mean |pred_count - gt_count|; box_mAP50 = pycocotools bbox COCOeval IoU 0.5 maxDet [1,10,100]",
+ "models": {
+  "yolo11x-seg": {
+   "ckpt": "/home/user/bench_any/runs/segment/african-penguin_yolo11x-seg_b0.98_e150_i640_be64_fair_grid/weights/best.pt",
+   "conf": 0.001,
+   "nms_on": {
+    "precision": 0.3449,
+    "recall": 0.9181,
+    "count_MAE": 10.3902,
+    "box_mAP50": 0.8777,
+    "N_preds": 2047,
+    "per_image": [
+     {
+      "stem": "IMG_1069_jpg.rf.076fcdc71891ec43320f10db71078f70",
+      "gt_count": 68,
+      "pred_count": 167,
+      "abs_err": 99
+     },
+     {
+      "stem": "IMG_1070_jpg.rf.26afa91b934ae1ed78e152937de90068",
+      "gt_count": 55,
+      "pred_count": 127,
+      "abs_err": 72
+     },
+     {
+      "stem": "IMG_1071_jpg.rf.0f83f25a29b8e5b506bebf53763ad12b",
+      "gt_count": 27,
+      "pred_count": 67,
+      "abs_err": 40
+     },
+     {
+      "stem": "IMG_1072_jpg.rf.d7e664470db82ff486523dcc771127af",
+      "gt_count": 13,
+      "pred_count": 41,
+      "abs_err": 28
+     },
+     {
+      "stem": "IMG_1073_jpg.rf.b42c731082c959276a36316facaf424b",
+      "gt_count": 11,
+      "pred_count": 33,
+      "abs_err": 22
+     },
+     {
+      "stem": "IMG_1075_jpg.rf.ac7a95e228c4ef630cee72a84e92d58d",
+      "gt_count": 3,
+      "pred_count": 9,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1076_jpg.rf.67f22a0d2d5386edd23de2141f7b5adb",
+      "gt_count": 5,
+      "pred_count": 8,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1078_jpg.rf.16d9177875a7986a363361fd926ea5ca",
+      "gt_count": 7,
+      "pred_count": 19,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1079_jpg.rf.750305021a8537080db89473afd99143",
+      "gt_count": 36,
+      "pred_count": 100,
+      "abs_err": 64
+     },
+     {
+      "stem": "IMG_1080_jpg.rf.206bf920deee171a23a57c447ca093b5",
+      "gt_count": 7,
+      "pred_count": 22,
+      "abs_err": 15
+     },
+     {
+      "stem": "IMG_1081_jpg.rf.a1f4e203fc5c54a61688ac8f3f32068a",
+      "gt_count": 5,
+      "pred_count": 39,
+      "abs_err": 34
+     },
+     {
+      "stem": "IMG_1082_jpg.rf.4a28a3e13ee8bda566f7a66d7f08a1ae",
+      "gt_count": 4,
+      "pred_count": 12,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1083_jpg.rf.fc8a11104d5f0c19e5b310aaa04b66f7",
+      "gt_count": 8,
+      "pred_count": 13,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1084_jpg.rf.d4db07bc2e9e27503825821ac8f778a5",
+      "gt_count": 6,
+      "pred_count": 23,
+      "abs_err": 17
+     },
+     {
+      "stem": "IMG_1085_jpg.rf.efabe910878e6e9a01b2b0e158664b66",
+      "gt_count": 4,
+      "pred_count": 11,
+      "abs_err": 7
+     },
+     {
+      "stem": "IMG_1086_jpg.rf.2dd228b6f34dbe6edf7ba1f41866fd7d",
+      "gt_count": 4,
+      "pred_count": 14,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1087_jpg.rf.661edf66fc09c9749ea008087e1ca7ca",
+      "gt_count": 2,
+      "pred_count": 8,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1088_jpg.rf.dbdb8cf0c6bbf3aa05be6d0e2ade1b3c",
+      "gt_count": 3,
+      "pred_count": 8,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1089_jpg.rf.54d3d43cc764ce13ead423e8361238f0",
+      "gt_count": 10,
+      "pred_count": 21,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1090_jpg.rf.ad44140a759370646c897e1a397fbac0",
+      "gt_count": 2,
+      "pred_count": 5,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1091_jpg.rf.9566047a0e5cf557eaa483c0b15aaee9",
+      "gt_count": 2,
+      "pred_count": 6,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1092_jpg.rf.471752d34f17d147b2f17ed59c0533f2",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1093_jpg.rf.d378021c00a4a470a95756da0c350650",
+      "gt_count": 4,
+      "pred_count": 12,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1094_jpg.rf.2175886c01eeef7f32da62fd029354c4",
+      "gt_count": 5,
+      "pred_count": 14,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1095_jpg.rf.199a0daef68d6d74c2858f41924581cc",
+      "gt_count": 5,
+      "pred_count": 16,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1096_jpg.rf.a4df5a210ceb410afb014e4cfd09f0a0",
+      "gt_count": 3,
+      "pred_count": 19,
+      "abs_err": 16
+     },
+     {
+      "stem": "IMG_1097_jpg.rf.c0d043a3ba484713a33077d601edca6d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1098_jpg.rf.88489587e8a7508d286e82c4f68f1e2c",
+      "gt_count": 4,
+      "pred_count": 12,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1099_jpg.rf.a67159abf20b4faaa12b3ca728084f51",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1100_jpg.rf.aa3dbb6ac6428987c591a1d63cb62fb4",
+      "gt_count": 2,
+      "pred_count": 16,
+      "abs_err": 14
+     },
+     {
+      "stem": "IMG_1101_jpg.rf.8a348c6f98f4edd556f36d716273b82e",
+      "gt_count": 4,
+      "pred_count": 20,
+      "abs_err": 16
+     },
+     {
+      "stem": "IMG_1102_jpg.rf.b31ff0a8de97b15ac8606c5a0efc7b02",
+      "gt_count": 2,
+      "pred_count": 8,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1103_jpg.rf.7fbb3b4ca2ba73f2c73818dc311adf71",
+      "gt_count": 2,
+      "pred_count": 5,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1104_jpg.rf.f3f374b63d2b3feb8dce67fbb628bf98",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1105_jpg.rf.d93af6ca6e971bf00072eb608881a35e",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1106_jpg.rf.de1e09a8cb93c1a414f97221f980c6f0",
+      "gt_count": 31,
+      "pred_count": 62,
+      "abs_err": 31
+     },
+     {
+      "stem": "IMG_1107_jpg.rf.69b6ca4e8c0fee7027f52ca57f063efe",
+      "gt_count": 79,
+      "pred_count": 166,
+      "abs_err": 87
+     },
+     {
+      "stem": "IMG_1108_jpg.rf.afc70c9df0cfa0b18ac34de4695b4827",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1109_jpg.rf.351a9c9bd35c44a3d04f93468ff4345f",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1110_jpg.rf.3247d7228b92f34036e580f07716d866",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1111_jpg.rf.dcc1532d9c58ffd1a93dbc0e2ab49cbd",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1112_jpg.rf.493f7f166094af8273b3a5a05d11066b",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1113_jpg.rf.d3f53e6d3b568f35685b7df9713892f6",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1114_jpg.rf.fdea72ce414b9dda54bc842c4164136b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1115_jpg.rf.67d98aaaa721405fddea463d02d9fe9a",
+      "gt_count": 2,
+      "pred_count": 12,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1116_jpg.rf.5658783c86c17a8a5df910d0dfcdbeef",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1117_jpg.rf.a25c8026d1234df8abb7be683568a981",
+      "gt_count": 1,
+      "pred_count": 26,
+      "abs_err": 25
+     },
+     {
+      "stem": "IMG_1118_jpg.rf.15de731b762906527705554818fcf41d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1119_jpg.rf.2386b943cf83ea2b88a474d80ddb0189",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1120_jpg.rf.cb34e5d955ef064ebdf92b8c2199ab40",
+      "gt_count": 9,
+      "pred_count": 18,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1121_jpg.rf.3f23a6338564e8bc53b244b2d0bbae2c",
+      "gt_count": 8,
+      "pred_count": 12,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1122_jpg.rf.aa07ecb328e696a0d6b91ac8ed8ea21b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1123_jpg.rf.3a34343b050252972c00072aee5bb04b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1124_jpg.rf.044fbba68cee0c305925fd23551a3cfc",
+      "gt_count": 3,
+      "pred_count": 8,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1125_jpg.rf.c9aac5d6ba0b80941fc9ac15ee5ca9e6",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1126_jpg.rf.0960746330bb542eae54597ac9dee67c",
+      "gt_count": 48,
+      "pred_count": 109,
+      "abs_err": 61
+     },
+     {
+      "stem": "IMG_1127_jpg.rf.dcd08a3060d59c835d3307984d4185e7",
+      "gt_count": 2,
+      "pred_count": 6,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1128_jpg.rf.30791173bdb552e9350c08ca0559383f",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1129_jpg.rf.c636d2dd79ba5e580400143710a957c1",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1130_jpg.rf.5b013e28f5665a6cc7ffe43b9d68e177",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1131_jpg.rf.ee3287a1ea7611af1c751f942d75a85f",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1132_jpg.rf.8cb55995a92d046991ef16681759d04a",
+      "gt_count": 4,
+      "pred_count": 13,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1133_jpg.rf.b4a25c4e83557fe4a8254492e741ce83",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1134_jpg.rf.7899249423cff7c25bc586375b22f336",
+      "gt_count": 1,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1135_jpg.rf.182f47d5c5a02afcfe8074730c014e47",
+      "gt_count": 2,
+      "pred_count": 7,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1136_jpg.rf.643dc713ba4338b9a4b694fcce8194be",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1137_jpg.rf.de3045eecc17eb21786644aee7baaa68",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1138_jpg.rf.cfcbcd6b6d5cf0693bd86995680080ce",
+      "gt_count": 1,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1139_jpg.rf.44e6e075844643c043aa1ebdc1229640",
+      "gt_count": 3,
+      "pred_count": 5,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1140_jpg.rf.c1f47fdb5c5f6c4cadb7ac3fb1241986",
+      "gt_count": 2,
+      "pred_count": 8,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1141_jpg.rf.27a79627b57ef264ac2c0a7d510d6cf6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1142_jpg.rf.ea4c60ae9cf6d955f3ae1824f56527cc",
+      "gt_count": 2,
+      "pred_count": 5,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1143_jpg.rf.16a8e59fa8ff0c81217523936e20f676",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1144_jpg.rf.2663bd517f91c17163a8eecba5f62c9e",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1145_jpg.rf.08497c7f18d626224a9dbb6bd5e2926b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1146_jpg.rf.decc558d5004cad8b365d6965f86d285",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1147_jpg.rf.638cd33ae5d740458600d08fe7430056",
+      "gt_count": 1,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1148_jpg.rf.14d8e6c7ecef73cf226cb30e31fec1b6",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1149_jpg.rf.0328c64e95d39a9dc53525beaf8dd2c9",
+      "gt_count": 1,
+      "pred_count": 6,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1150_jpg.rf.8d35da9f4dcfdd70a231368f13957c50",
+      "gt_count": 3,
+      "pred_count": 5,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1151_jpg.rf.d00bf3d0ca4cfd35770246035ca0f44a",
+      "gt_count": 2,
+      "pred_count": 5,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1152_jpg.rf.03cbae54ebff2d57e81dcb0250dee09a",
+      "gt_count": 1,
+      "pred_count": 6,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1153_jpg.rf.b59c31b61e456203894aac5d16e37a72",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1154_jpg.rf.95410389f55a7354c642f50a020306e3",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1155_jpg.rf.1c33af2acc98ce486b24c64097781c37",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1156_jpg.rf.bcd3c96ebdc53a57db9a9ff3acb0fac1",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1157_jpg.rf.4b5120c41303766a345fcd0dbf843e9c",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1158_jpg.rf.5bb3aaef56737854a5469e4f620d638c",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1159_jpg.rf.fe9aef12ebfee41b069f942044d5c96e",
+      "gt_count": 1,
+      "pred_count": 5,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1160_jpg.rf.15297de566db22ee644dc8a98f9a9238",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1161_jpg.rf.a0cdd811fb2595e8728621595542d6e7",
+      "gt_count": 1,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1162_jpg.rf.14cbf4d05dbabdbb4cb5b8f69247b057",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1163_jpg.rf.33d61ca8bb311c7052b08e45fe0bd038",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1164_jpg.rf.a25b5968368d3c1d34cabf612203f345",
+      "gt_count": 3,
+      "pred_count": 13,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1165_jpg.rf.bb4c14a748244473a668de11980f42bc",
+      "gt_count": 3,
+      "pred_count": 9,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1166_jpg.rf.a4b9c9d434d8c8aa238bed183c1dcee8",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1167_jpg.rf.f81760980b72662ba306a464d4bdbe4f",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1168_jpg.rf.dd7ef8d5749c7b34a21187ede4dcf711",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1169_jpg.rf.323e9e7dbbc8f3623e2b30effa89deee",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1170_jpg.rf.a53ff598342103000f26c24fd0d103f7",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1171_jpg.rf.51d8831586d0707c6c42b368630efbde",
+      "gt_count": 3,
+      "pred_count": 5,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1172_jpg.rf.91743d4dd8eb3988a363b246d99c504a",
+      "gt_count": 4,
+      "pred_count": 6,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1173_jpg.rf.a6832aa5d89cb2a8af65226bf253f18e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1174_jpg.rf.38a26444b60ce4e0cac0c8605c6fe2c0",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1175_jpg.rf.fbdf519a2d49e279b77478aa69e1d189",
+      "gt_count": 11,
+      "pred_count": 34,
+      "abs_err": 23
+     },
+     {
+      "stem": "IMG_1177_jpg.rf.c7f9b68b5ef74e026c4945e179f618c5",
+      "gt_count": 5,
+      "pred_count": 13,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1178_jpg.rf.10c9e86354f7c0451b0b6da9cabb7bef",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1179_jpg.rf.af4db44f45d530bc95f112329bfe4056",
+      "gt_count": 9,
+      "pred_count": 18,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1180_jpg.rf.1478ccfd9ba9ac500494fd10f4b9ace9",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1181_jpg.rf.610198d40f590e37a159ebdba9472306",
+      "gt_count": 1,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1182_jpg.rf.e4f04a13faeb4ef0c42c75e1aa8395d2",
+      "gt_count": 1,
+      "pred_count": 5,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1183_jpg.rf.ed41a17f51b1d0fff4ca290721b17ac4",
+      "gt_count": 4,
+      "pred_count": 23,
+      "abs_err": 19
+     },
+     {
+      "stem": "IMG_1184_jpg.rf.aaa6c851dc21e0cb39a83c82fe94ac0a",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1185_jpg.rf.1ee6c77347a3942b35342e1aa788e801",
+      "gt_count": 2,
+      "pred_count": 7,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1186_jpg.rf.549a313f77c9a3d950346d39815df85f",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1187_jpg.rf.870abcb1e0a20af9b38d58304dbd8d72",
+      "gt_count": 3,
+      "pred_count": 15,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1188_jpg.rf.33b3f0c1933f12ccde6a1edec8eccc0e",
+      "gt_count": 3,
+      "pred_count": 7,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1189_jpg.rf.2cb1a9ab430c4214f2724513451fcde4",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1190_jpg.rf.1f969c4c5fcd66562fd0bfe82d1bc9be",
+      "gt_count": 121,
+      "pred_count": 372,
+      "abs_err": 251
+     },
+     {
+      "stem": "IMG_1191_jpg.rf.1e011df078b0512e7d12dbbeff558c64",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1192_jpg.rf.468ff62c74069d3cb3d9cf2116b80f9b",
+      "gt_count": 1,
+      "pred_count": 7,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1193_jpg.rf.60b0eee9d661520afdf1711a083d95fc",
+      "gt_count": 1,
+      "pred_count": 9,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1194_jpg.rf.5f6713a9e5c94cca7b7a165fb96f5212",
+      "gt_count": 1,
+      "pred_count": 4,
+      "abs_err": 3
+     }
+    ],
+    "predict_time_s": 13.5
+   },
+   "nms_off": {
+    "precision": 0.0622,
+    "recall": 0.9389,
+    "count_MAE": 88.0732,
+    "box_mAP50": 0.1161,
+    "N_preds": 11602,
+    "per_image": [
+     {
+      "stem": "IMG_1069_jpg.rf.076fcdc71891ec43320f10db71078f70",
+      "gt_count": 68,
+      "pred_count": 749,
+      "abs_err": 681
+     },
+     {
+      "stem": "IMG_1070_jpg.rf.26afa91b934ae1ed78e152937de90068",
+      "gt_count": 55,
+      "pred_count": 670,
+      "abs_err": 615
+     },
+     {
+      "stem": "IMG_1071_jpg.rf.0f83f25a29b8e5b506bebf53763ad12b",
+      "gt_count": 27,
+      "pred_count": 404,
+      "abs_err": 377
+     },
+     {
+      "stem": "IMG_1072_jpg.rf.d7e664470db82ff486523dcc771127af",
+      "gt_count": 13,
+      "pred_count": 221,
+      "abs_err": 208
+     },
+     {
+      "stem": "IMG_1073_jpg.rf.b42c731082c959276a36316facaf424b",
+      "gt_count": 11,
+      "pred_count": 210,
+      "abs_err": 199
+     },
+     {
+      "stem": "IMG_1075_jpg.rf.ac7a95e228c4ef630cee72a84e92d58d",
+      "gt_count": 3,
+      "pred_count": 61,
+      "abs_err": 58
+     },
+     {
+      "stem": "IMG_1076_jpg.rf.67f22a0d2d5386edd23de2141f7b5adb",
+      "gt_count": 5,
+      "pred_count": 76,
+      "abs_err": 71
+     },
+     {
+      "stem": "IMG_1078_jpg.rf.16d9177875a7986a363361fd926ea5ca",
+      "gt_count": 7,
+      "pred_count": 115,
+      "abs_err": 108
+     },
+     {
+      "stem": "IMG_1079_jpg.rf.750305021a8537080db89473afd99143",
+      "gt_count": 36,
+      "pred_count": 571,
+      "abs_err": 535
+     },
+     {
+      "stem": "IMG_1080_jpg.rf.206bf920deee171a23a57c447ca093b5",
+      "gt_count": 7,
+      "pred_count": 137,
+      "abs_err": 130
+     },
+     {
+      "stem": "IMG_1081_jpg.rf.a1f4e203fc5c54a61688ac8f3f32068a",
+      "gt_count": 5,
+      "pred_count": 196,
+      "abs_err": 191
+     },
+     {
+      "stem": "IMG_1082_jpg.rf.4a28a3e13ee8bda566f7a66d7f08a1ae",
+      "gt_count": 4,
+      "pred_count": 87,
+      "abs_err": 83
+     },
+     {
+      "stem": "IMG_1083_jpg.rf.fc8a11104d5f0c19e5b310aaa04b66f7",
+      "gt_count": 8,
+      "pred_count": 85,
+      "abs_err": 77
+     },
+     {
+      "stem": "IMG_1084_jpg.rf.d4db07bc2e9e27503825821ac8f778a5",
+      "gt_count": 6,
+      "pred_count": 127,
+      "abs_err": 121
+     },
+     {
+      "stem": "IMG_1085_jpg.rf.efabe910878e6e9a01b2b0e158664b66",
+      "gt_count": 4,
+      "pred_count": 74,
+      "abs_err": 70
+     },
+     {
+      "stem": "IMG_1086_jpg.rf.2dd228b6f34dbe6edf7ba1f41866fd7d",
+      "gt_count": 4,
+      "pred_count": 96,
+      "abs_err": 92
+     },
+     {
+      "stem": "IMG_1087_jpg.rf.661edf66fc09c9749ea008087e1ca7ca",
+      "gt_count": 2,
+      "pred_count": 52,
+      "abs_err": 50
+     },
+     {
+      "stem": "IMG_1088_jpg.rf.dbdb8cf0c6bbf3aa05be6d0e2ade1b3c",
+      "gt_count": 3,
+      "pred_count": 59,
+      "abs_err": 56
+     },
+     {
+      "stem": "IMG_1089_jpg.rf.54d3d43cc764ce13ead423e8361238f0",
+      "gt_count": 10,
+      "pred_count": 152,
+      "abs_err": 142
+     },
+     {
+      "stem": "IMG_1090_jpg.rf.ad44140a759370646c897e1a397fbac0",
+      "gt_count": 2,
+      "pred_count": 41,
+      "abs_err": 39
+     },
+     {
+      "stem": "IMG_1091_jpg.rf.9566047a0e5cf557eaa483c0b15aaee9",
+      "gt_count": 2,
+      "pred_count": 27,
+      "abs_err": 25
+     },
+     {
+      "stem": "IMG_1092_jpg.rf.471752d34f17d147b2f17ed59c0533f2",
+      "gt_count": 3,
+      "pred_count": 31,
+      "abs_err": 28
+     },
+     {
+      "stem": "IMG_1093_jpg.rf.d378021c00a4a470a95756da0c350650",
+      "gt_count": 4,
+      "pred_count": 62,
+      "abs_err": 58
+     },
+     {
+      "stem": "IMG_1094_jpg.rf.2175886c01eeef7f32da62fd029354c4",
+      "gt_count": 5,
+      "pred_count": 67,
+      "abs_err": 62
+     },
+     {
+      "stem": "IMG_1095_jpg.rf.199a0daef68d6d74c2858f41924581cc",
+      "gt_count": 5,
+      "pred_count": 90,
+      "abs_err": 85
+     },
+     {
+      "stem": "IMG_1096_jpg.rf.a4df5a210ceb410afb014e4cfd09f0a0",
+      "gt_count": 3,
+      "pred_count": 98,
+      "abs_err": 95
+     },
+     {
+      "stem": "IMG_1097_jpg.rf.c0d043a3ba484713a33077d601edca6d",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1098_jpg.rf.88489587e8a7508d286e82c4f68f1e2c",
+      "gt_count": 4,
+      "pred_count": 84,
+      "abs_err": 80
+     },
+     {
+      "stem": "IMG_1099_jpg.rf.a67159abf20b4faaa12b3ca728084f51",
+      "gt_count": 2,
+      "pred_count": 29,
+      "abs_err": 27
+     },
+     {
+      "stem": "IMG_1100_jpg.rf.aa3dbb6ac6428987c591a1d63cb62fb4",
+      "gt_count": 2,
+      "pred_count": 55,
+      "abs_err": 53
+     },
+     {
+      "stem": "IMG_1101_jpg.rf.8a348c6f98f4edd556f36d716273b82e",
+      "gt_count": 4,
+      "pred_count": 91,
+      "abs_err": 87
+     },
+     {
+      "stem": "IMG_1102_jpg.rf.b31ff0a8de97b15ac8606c5a0efc7b02",
+      "gt_count": 2,
+      "pred_count": 42,
+      "abs_err": 40
+     },
+     {
+      "stem": "IMG_1103_jpg.rf.7fbb3b4ca2ba73f2c73818dc311adf71",
+      "gt_count": 2,
+      "pred_count": 37,
+      "abs_err": 35
+     },
+     {
+      "stem": "IMG_1104_jpg.rf.f3f374b63d2b3feb8dce67fbb628bf98",
+      "gt_count": 2,
+      "pred_count": 22,
+      "abs_err": 20
+     },
+     {
+      "stem": "IMG_1105_jpg.rf.d93af6ca6e971bf00072eb608881a35e",
+      "gt_count": 1,
+      "pred_count": 25,
+      "abs_err": 24
+     },
+     {
+      "stem": "IMG_1106_jpg.rf.de1e09a8cb93c1a414f97221f980c6f0",
+      "gt_count": 31,
+      "pred_count": 405,
+      "abs_err": 374
+     },
+     {
+      "stem": "IMG_1107_jpg.rf.69b6ca4e8c0fee7027f52ca57f063efe",
+      "gt_count": 79,
+      "pred_count": 1016,
+      "abs_err": 937
+     },
+     {
+      "stem": "IMG_1108_jpg.rf.afc70c9df0cfa0b18ac34de4695b4827",
+      "gt_count": 2,
+      "pred_count": 29,
+      "abs_err": 27
+     },
+     {
+      "stem": "IMG_1109_jpg.rf.351a9c9bd35c44a3d04f93468ff4345f",
+      "gt_count": 1,
+      "pred_count": 17,
+      "abs_err": 16
+     },
+     {
+      "stem": "IMG_1110_jpg.rf.3247d7228b92f34036e580f07716d866",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1111_jpg.rf.dcc1532d9c58ffd1a93dbc0e2ab49cbd",
+      "gt_count": 1,
+      "pred_count": 11,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1112_jpg.rf.493f7f166094af8273b3a5a05d11066b",
+      "gt_count": 2,
+      "pred_count": 20,
+      "abs_err": 18
+     },
+     {
+      "stem": "IMG_1113_jpg.rf.d3f53e6d3b568f35685b7df9713892f6",
+      "gt_count": 1,
+      "pred_count": 19,
+      "abs_err": 18
+     },
+     {
+      "stem": "IMG_1114_jpg.rf.fdea72ce414b9dda54bc842c4164136b",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1115_jpg.rf.67d98aaaa721405fddea463d02d9fe9a",
+      "gt_count": 2,
+      "pred_count": 85,
+      "abs_err": 83
+     },
+     {
+      "stem": "IMG_1116_jpg.rf.5658783c86c17a8a5df910d0dfcdbeef",
+      "gt_count": 2,
+      "pred_count": 21,
+      "abs_err": 19
+     },
+     {
+      "stem": "IMG_1117_jpg.rf.a25c8026d1234df8abb7be683568a981",
+      "gt_count": 1,
+      "pred_count": 132,
+      "abs_err": 131
+     },
+     {
+      "stem": "IMG_1118_jpg.rf.15de731b762906527705554818fcf41d",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1119_jpg.rf.2386b943cf83ea2b88a474d80ddb0189",
+      "gt_count": 1,
+      "pred_count": 14,
+      "abs_err": 13
+     },
+     {
+      "stem": "IMG_1120_jpg.rf.cb34e5d955ef064ebdf92b8c2199ab40",
+      "gt_count": 9,
+      "pred_count": 115,
+      "abs_err": 106
+     },
+     {
+      "stem": "IMG_1121_jpg.rf.3f23a6338564e8bc53b244b2d0bbae2c",
+      "gt_count": 8,
+      "pred_count": 73,
+      "abs_err": 65
+     },
+     {
+      "stem": "IMG_1122_jpg.rf.aa07ecb328e696a0d6b91ac8ed8ea21b",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1123_jpg.rf.3a34343b050252972c00072aee5bb04b",
+      "gt_count": 1,
+      "pred_count": 14,
+      "abs_err": 13
+     },
+     {
+      "stem": "IMG_1124_jpg.rf.044fbba68cee0c305925fd23551a3cfc",
+      "gt_count": 3,
+      "pred_count": 50,
+      "abs_err": 47
+     },
+     {
+      "stem": "IMG_1125_jpg.rf.c9aac5d6ba0b80941fc9ac15ee5ca9e6",
+      "gt_count": 2,
+      "pred_count": 23,
+      "abs_err": 21
+     },
+     {
+      "stem": "IMG_1126_jpg.rf.0960746330bb542eae54597ac9dee67c",
+      "gt_count": 48,
+      "pred_count": 715,
+      "abs_err": 667
+     },
+     {
+      "stem": "IMG_1127_jpg.rf.dcd08a3060d59c835d3307984d4185e7",
+      "gt_count": 2,
+      "pred_count": 29,
+      "abs_err": 27
+     },
+     {
+      "stem": "IMG_1128_jpg.rf.30791173bdb552e9350c08ca0559383f",
+      "gt_count": 1,
+      "pred_count": 46,
+      "abs_err": 45
+     },
+     {
+      "stem": "IMG_1129_jpg.rf.c636d2dd79ba5e580400143710a957c1",
+      "gt_count": 2,
+      "pred_count": 25,
+      "abs_err": 23
+     },
+     {
+      "stem": "IMG_1130_jpg.rf.5b013e28f5665a6cc7ffe43b9d68e177",
+      "gt_count": 3,
+      "pred_count": 34,
+      "abs_err": 31
+     },
+     {
+      "stem": "IMG_1131_jpg.rf.ee3287a1ea7611af1c751f942d75a85f",
+      "gt_count": 1,
+      "pred_count": 12,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1132_jpg.rf.8cb55995a92d046991ef16681759d04a",
+      "gt_count": 4,
+      "pred_count": 73,
+      "abs_err": 69
+     },
+     {
+      "stem": "IMG_1133_jpg.rf.b4a25c4e83557fe4a8254492e741ce83",
+      "gt_count": 1,
+      "pred_count": 14,
+      "abs_err": 13
+     },
+     {
+      "stem": "IMG_1134_jpg.rf.7899249423cff7c25bc586375b22f336",
+      "gt_count": 1,
+      "pred_count": 20,
+      "abs_err": 19
+     },
+     {
+      "stem": "IMG_1135_jpg.rf.182f47d5c5a02afcfe8074730c014e47",
+      "gt_count": 2,
+      "pred_count": 37,
+      "abs_err": 35
+     },
+     {
+      "stem": "IMG_1136_jpg.rf.643dc713ba4338b9a4b694fcce8194be",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1137_jpg.rf.de3045eecc17eb21786644aee7baaa68",
+      "gt_count": 1,
+      "pred_count": 12,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1138_jpg.rf.cfcbcd6b6d5cf0693bd86995680080ce",
+      "gt_count": 1,
+      "pred_count": 25,
+      "abs_err": 24
+     },
+     {
+      "stem": "IMG_1139_jpg.rf.44e6e075844643c043aa1ebdc1229640",
+      "gt_count": 3,
+      "pred_count": 36,
+      "abs_err": 33
+     },
+     {
+      "stem": "IMG_1140_jpg.rf.c1f47fdb5c5f6c4cadb7ac3fb1241986",
+      "gt_count": 2,
+      "pred_count": 37,
+      "abs_err": 35
+     },
+     {
+      "stem": "IMG_1141_jpg.rf.27a79627b57ef264ac2c0a7d510d6cf6",
+      "gt_count": 1,
+      "pred_count": 11,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1142_jpg.rf.ea4c60ae9cf6d955f3ae1824f56527cc",
+      "gt_count": 2,
+      "pred_count": 28,
+      "abs_err": 26
+     },
+     {
+      "stem": "IMG_1143_jpg.rf.16a8e59fa8ff0c81217523936e20f676",
+      "gt_count": 1,
+      "pred_count": 11,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1144_jpg.rf.2663bd517f91c17163a8eecba5f62c9e",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1145_jpg.rf.08497c7f18d626224a9dbb6bd5e2926b",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1146_jpg.rf.decc558d5004cad8b365d6965f86d285",
+      "gt_count": 1,
+      "pred_count": 11,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1147_jpg.rf.638cd33ae5d740458600d08fe7430056",
+      "gt_count": 1,
+      "pred_count": 12,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1148_jpg.rf.14d8e6c7ecef73cf226cb30e31fec1b6",
+      "gt_count": 1,
+      "pred_count": 14,
+      "abs_err": 13
+     },
+     {
+      "stem": "IMG_1149_jpg.rf.0328c64e95d39a9dc53525beaf8dd2c9",
+      "gt_count": 1,
+      "pred_count": 34,
+      "abs_err": 33
+     },
+     {
+      "stem": "IMG_1150_jpg.rf.8d35da9f4dcfdd70a231368f13957c50",
+      "gt_count": 3,
+      "pred_count": 42,
+      "abs_err": 39
+     },
+     {
+      "stem": "IMG_1151_jpg.rf.d00bf3d0ca4cfd35770246035ca0f44a",
+      "gt_count": 2,
+      "pred_count": 37,
+      "abs_err": 35
+     },
+     {
+      "stem": "IMG_1152_jpg.rf.03cbae54ebff2d57e81dcb0250dee09a",
+      "gt_count": 1,
+      "pred_count": 19,
+      "abs_err": 18
+     },
+     {
+      "stem": "IMG_1153_jpg.rf.b59c31b61e456203894aac5d16e37a72",
+      "gt_count": 1,
+      "pred_count": 12,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1154_jpg.rf.95410389f55a7354c642f50a020306e3",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1155_jpg.rf.1c33af2acc98ce486b24c64097781c37",
+      "gt_count": 1,
+      "pred_count": 12,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1156_jpg.rf.bcd3c96ebdc53a57db9a9ff3acb0fac1",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1157_jpg.rf.4b5120c41303766a345fcd0dbf843e9c",
+      "gt_count": 1,
+      "pred_count": 18,
+      "abs_err": 17
+     },
+     {
+      "stem": "IMG_1158_jpg.rf.5bb3aaef56737854a5469e4f620d638c",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1159_jpg.rf.fe9aef12ebfee41b069f942044d5c96e",
+      "gt_count": 1,
+      "pred_count": 49,
+      "abs_err": 48
+     },
+     {
+      "stem": "IMG_1160_jpg.rf.15297de566db22ee644dc8a98f9a9238",
+      "gt_count": 1,
+      "pred_count": 11,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1161_jpg.rf.a0cdd811fb2595e8728621595542d6e7",
+      "gt_count": 1,
+      "pred_count": 18,
+      "abs_err": 17
+     },
+     {
+      "stem": "IMG_1162_jpg.rf.14cbf4d05dbabdbb4cb5b8f69247b057",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1163_jpg.rf.33d61ca8bb311c7052b08e45fe0bd038",
+      "gt_count": 1,
+      "pred_count": 17,
+      "abs_err": 16
+     },
+     {
+      "stem": "IMG_1164_jpg.rf.a25b5968368d3c1d34cabf612203f345",
+      "gt_count": 3,
+      "pred_count": 90,
+      "abs_err": 87
+     },
+     {
+      "stem": "IMG_1165_jpg.rf.bb4c14a748244473a668de11980f42bc",
+      "gt_count": 3,
+      "pred_count": 53,
+      "abs_err": 50
+     },
+     {
+      "stem": "IMG_1166_jpg.rf.a4b9c9d434d8c8aa238bed183c1dcee8",
+      "gt_count": 1,
+      "pred_count": 16,
+      "abs_err": 15
+     },
+     {
+      "stem": "IMG_1167_jpg.rf.f81760980b72662ba306a464d4bdbe4f",
+      "gt_count": 1,
+      "pred_count": 15,
+      "abs_err": 14
+     },
+     {
+      "stem": "IMG_1168_jpg.rf.dd7ef8d5749c7b34a21187ede4dcf711",
+      "gt_count": 1,
+      "pred_count": 14,
+      "abs_err": 13
+     },
+     {
+      "stem": "IMG_1169_jpg.rf.323e9e7dbbc8f3623e2b30effa89deee",
+      "gt_count": 3,
+      "pred_count": 41,
+      "abs_err": 38
+     },
+     {
+      "stem": "IMG_1170_jpg.rf.a53ff598342103000f26c24fd0d103f7",
+      "gt_count": 5,
+      "pred_count": 52,
+      "abs_err": 47
+     },
+     {
+      "stem": "IMG_1171_jpg.rf.51d8831586d0707c6c42b368630efbde",
+      "gt_count": 3,
+      "pred_count": 43,
+      "abs_err": 40
+     },
+     {
+      "stem": "IMG_1172_jpg.rf.91743d4dd8eb3988a363b246d99c504a",
+      "gt_count": 4,
+      "pred_count": 45,
+      "abs_err": 41
+     },
+     {
+      "stem": "IMG_1173_jpg.rf.a6832aa5d89cb2a8af65226bf253f18e",
+      "gt_count": 1,
+      "pred_count": 10,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1174_jpg.rf.38a26444b60ce4e0cac0c8605c6fe2c0",
+      "gt_count": 2,
+      "pred_count": 22,
+      "abs_err": 20
+     },
+     {
+      "stem": "IMG_1175_jpg.rf.fbdf519a2d49e279b77478aa69e1d189",
+      "gt_count": 11,
+      "pred_count": 178,
+      "abs_err": 167
+     },
+     {
+      "stem": "IMG_1177_jpg.rf.c7f9b68b5ef74e026c4945e179f618c5",
+      "gt_count": 5,
+      "pred_count": 96,
+      "abs_err": 91
+     },
+     {
+      "stem": "IMG_1178_jpg.rf.10c9e86354f7c0451b0b6da9cabb7bef",
+      "gt_count": 1,
+      "pred_count": 17,
+      "abs_err": 16
+     },
+     {
+      "stem": "IMG_1179_jpg.rf.af4db44f45d530bc95f112329bfe4056",
+      "gt_count": 9,
+      "pred_count": 130,
+      "abs_err": 121
+     },
+     {
+      "stem": "IMG_1180_jpg.rf.1478ccfd9ba9ac500494fd10f4b9ace9",
+      "gt_count": 1,
+      "pred_count": 17,
+      "abs_err": 16
+     },
+     {
+      "stem": "IMG_1181_jpg.rf.610198d40f590e37a159ebdba9472306",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1182_jpg.rf.e4f04a13faeb4ef0c42c75e1aa8395d2",
+      "gt_count": 1,
+      "pred_count": 40,
+      "abs_err": 39
+     },
+     {
+      "stem": "IMG_1183_jpg.rf.ed41a17f51b1d0fff4ca290721b17ac4",
+      "gt_count": 4,
+      "pred_count": 98,
+      "abs_err": 94
+     },
+     {
+      "stem": "IMG_1184_jpg.rf.aaa6c851dc21e0cb39a83c82fe94ac0a",
+      "gt_count": 1,
+      "pred_count": 13,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1185_jpg.rf.1ee6c77347a3942b35342e1aa788e801",
+      "gt_count": 2,
+      "pred_count": 53,
+      "abs_err": 51
+     },
+     {
+      "stem": "IMG_1186_jpg.rf.549a313f77c9a3d950346d39815df85f",
+      "gt_count": 2,
+      "pred_count": 21,
+      "abs_err": 19
+     },
+     {
+      "stem": "IMG_1187_jpg.rf.870abcb1e0a20af9b38d58304dbd8d72",
+      "gt_count": 3,
+      "pred_count": 73,
+      "abs_err": 70
+     },
+     {
+      "stem": "IMG_1188_jpg.rf.33b3f0c1933f12ccde6a1edec8eccc0e",
+      "gt_count": 3,
+      "pred_count": 39,
+      "abs_err": 36
+     },
+     {
+      "stem": "IMG_1189_jpg.rf.2cb1a9ab430c4214f2724513451fcde4",
+      "gt_count": 1,
+      "pred_count": 11,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1190_jpg.rf.1f969c4c5fcd66562fd0bfe82d1bc9be",
+      "gt_count": 121,
+      "pred_count": 1625,
+      "abs_err": 1504
+     },
+     {
+      "stem": "IMG_1191_jpg.rf.1e011df078b0512e7d12dbbeff558c64",
+      "gt_count": 1,
+      "pred_count": 80,
+      "abs_err": 79
+     },
+     {
+      "stem": "IMG_1192_jpg.rf.468ff62c74069d3cb3d9cf2116b80f9b",
+      "gt_count": 1,
+      "pred_count": 38,
+      "abs_err": 37
+     },
+     {
+      "stem": "IMG_1193_jpg.rf.60b0eee9d661520afdf1711a083d95fc",
+      "gt_count": 1,
+      "pred_count": 46,
+      "abs_err": 45
+     },
+     {
+      "stem": "IMG_1194_jpg.rf.5f6713a9e5c94cca7b7a165fb96f5212",
+      "gt_count": 1,
+      "pred_count": 23,
+      "abs_err": 22
+     }
+    ],
+    "predict_time_s": 11.0
+   },
+   "delta_on_minus_off": {
+    "precision": 0.2827,
+    "recall": -0.0208,
+    "count_MAE": -77.683,
+    "box_mAP50": 0.7616,
+    "N_preds": -9555
+   }
+  },
+  "rtdetr-3": {
+   "ckpt": "/home/user/bench_any/runs/detect/african-penguin_rtdetr-3_b8_e150_i640_be64_fair_grid/weights/last.pth",
+   "conf": 0.25,
+   "nms_on": {
+    "precision": 0.8994,
+    "recall": 0.8375,
+    "count_MAE": 0.626,
+    "box_mAP50": 0.8204,
+    "N_preds": 716,
+    "per_image": [
+     {
+      "stem": "IMG_1069_jpg.rf.076fcdc71891ec43320f10db71078f70",
+      "gt_count": 68,
+      "pred_count": 65,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1070_jpg.rf.26afa91b934ae1ed78e152937de90068",
+      "gt_count": 55,
+      "pred_count": 52,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1071_jpg.rf.0f83f25a29b8e5b506bebf53763ad12b",
+      "gt_count": 27,
+      "pred_count": 24,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1072_jpg.rf.d7e664470db82ff486523dcc771127af",
+      "gt_count": 13,
+      "pred_count": 11,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1073_jpg.rf.b42c731082c959276a36316facaf424b",
+      "gt_count": 11,
+      "pred_count": 10,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1075_jpg.rf.ac7a95e228c4ef630cee72a84e92d58d",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1076_jpg.rf.67f22a0d2d5386edd23de2141f7b5adb",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1078_jpg.rf.16d9177875a7986a363361fd926ea5ca",
+      "gt_count": 7,
+      "pred_count": 6,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1079_jpg.rf.750305021a8537080db89473afd99143",
+      "gt_count": 36,
+      "pred_count": 29,
+      "abs_err": 7
+     },
+     {
+      "stem": "IMG_1080_jpg.rf.206bf920deee171a23a57c447ca093b5",
+      "gt_count": 7,
+      "pred_count": 6,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1081_jpg.rf.a1f4e203fc5c54a61688ac8f3f32068a",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1082_jpg.rf.4a28a3e13ee8bda566f7a66d7f08a1ae",
+      "gt_count": 4,
+      "pred_count": 5,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1083_jpg.rf.fc8a11104d5f0c19e5b310aaa04b66f7",
+      "gt_count": 8,
+      "pred_count": 3,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1084_jpg.rf.d4db07bc2e9e27503825821ac8f778a5",
+      "gt_count": 6,
+      "pred_count": 6,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1085_jpg.rf.efabe910878e6e9a01b2b0e158664b66",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1086_jpg.rf.2dd228b6f34dbe6edf7ba1f41866fd7d",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1087_jpg.rf.661edf66fc09c9749ea008087e1ca7ca",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1088_jpg.rf.dbdb8cf0c6bbf3aa05be6d0e2ade1b3c",
+      "gt_count": 3,
+      "pred_count": 1,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1089_jpg.rf.54d3d43cc764ce13ead423e8361238f0",
+      "gt_count": 10,
+      "pred_count": 9,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1090_jpg.rf.ad44140a759370646c897e1a397fbac0",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1091_jpg.rf.9566047a0e5cf557eaa483c0b15aaee9",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1092_jpg.rf.471752d34f17d147b2f17ed59c0533f2",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1093_jpg.rf.d378021c00a4a470a95756da0c350650",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1094_jpg.rf.2175886c01eeef7f32da62fd029354c4",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1095_jpg.rf.199a0daef68d6d74c2858f41924581cc",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1096_jpg.rf.a4df5a210ceb410afb014e4cfd09f0a0",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1097_jpg.rf.c0d043a3ba484713a33077d601edca6d",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1098_jpg.rf.88489587e8a7508d286e82c4f68f1e2c",
+      "gt_count": 4,
+      "pred_count": 5,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1099_jpg.rf.a67159abf20b4faaa12b3ca728084f51",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1100_jpg.rf.aa3dbb6ac6428987c591a1d63cb62fb4",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1101_jpg.rf.8a348c6f98f4edd556f36d716273b82e",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1102_jpg.rf.b31ff0a8de97b15ac8606c5a0efc7b02",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1103_jpg.rf.7fbb3b4ca2ba73f2c73818dc311adf71",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1104_jpg.rf.f3f374b63d2b3feb8dce67fbb628bf98",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1105_jpg.rf.d93af6ca6e971bf00072eb608881a35e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1106_jpg.rf.de1e09a8cb93c1a414f97221f980c6f0",
+      "gt_count": 31,
+      "pred_count": 28,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1107_jpg.rf.69b6ca4e8c0fee7027f52ca57f063efe",
+      "gt_count": 79,
+      "pred_count": 72,
+      "abs_err": 7
+     },
+     {
+      "stem": "IMG_1108_jpg.rf.afc70c9df0cfa0b18ac34de4695b4827",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1109_jpg.rf.351a9c9bd35c44a3d04f93468ff4345f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1110_jpg.rf.3247d7228b92f34036e580f07716d866",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1111_jpg.rf.dcc1532d9c58ffd1a93dbc0e2ab49cbd",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1112_jpg.rf.493f7f166094af8273b3a5a05d11066b",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1113_jpg.rf.d3f53e6d3b568f35685b7df9713892f6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1114_jpg.rf.fdea72ce414b9dda54bc842c4164136b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1115_jpg.rf.67d98aaaa721405fddea463d02d9fe9a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1116_jpg.rf.5658783c86c17a8a5df910d0dfcdbeef",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1117_jpg.rf.a25c8026d1234df8abb7be683568a981",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1118_jpg.rf.15de731b762906527705554818fcf41d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1119_jpg.rf.2386b943cf83ea2b88a474d80ddb0189",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1120_jpg.rf.cb34e5d955ef064ebdf92b8c2199ab40",
+      "gt_count": 9,
+      "pred_count": 9,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1121_jpg.rf.3f23a6338564e8bc53b244b2d0bbae2c",
+      "gt_count": 8,
+      "pred_count": 4,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1122_jpg.rf.aa07ecb328e696a0d6b91ac8ed8ea21b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1123_jpg.rf.3a34343b050252972c00072aee5bb04b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1124_jpg.rf.044fbba68cee0c305925fd23551a3cfc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1125_jpg.rf.c9aac5d6ba0b80941fc9ac15ee5ca9e6",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1126_jpg.rf.0960746330bb542eae54597ac9dee67c",
+      "gt_count": 48,
+      "pred_count": 46,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1127_jpg.rf.dcd08a3060d59c835d3307984d4185e7",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1128_jpg.rf.30791173bdb552e9350c08ca0559383f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1129_jpg.rf.c636d2dd79ba5e580400143710a957c1",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1130_jpg.rf.5b013e28f5665a6cc7ffe43b9d68e177",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1131_jpg.rf.ee3287a1ea7611af1c751f942d75a85f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1132_jpg.rf.8cb55995a92d046991ef16681759d04a",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1133_jpg.rf.b4a25c4e83557fe4a8254492e741ce83",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1134_jpg.rf.7899249423cff7c25bc586375b22f336",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1135_jpg.rf.182f47d5c5a02afcfe8074730c014e47",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1136_jpg.rf.643dc713ba4338b9a4b694fcce8194be",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1137_jpg.rf.de3045eecc17eb21786644aee7baaa68",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1138_jpg.rf.cfcbcd6b6d5cf0693bd86995680080ce",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1139_jpg.rf.44e6e075844643c043aa1ebdc1229640",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1140_jpg.rf.c1f47fdb5c5f6c4cadb7ac3fb1241986",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1141_jpg.rf.27a79627b57ef264ac2c0a7d510d6cf6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1142_jpg.rf.ea4c60ae9cf6d955f3ae1824f56527cc",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1143_jpg.rf.16a8e59fa8ff0c81217523936e20f676",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1144_jpg.rf.2663bd517f91c17163a8eecba5f62c9e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1145_jpg.rf.08497c7f18d626224a9dbb6bd5e2926b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1146_jpg.rf.decc558d5004cad8b365d6965f86d285",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1147_jpg.rf.638cd33ae5d740458600d08fe7430056",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1148_jpg.rf.14d8e6c7ecef73cf226cb30e31fec1b6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1149_jpg.rf.0328c64e95d39a9dc53525beaf8dd2c9",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1150_jpg.rf.8d35da9f4dcfdd70a231368f13957c50",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1151_jpg.rf.d00bf3d0ca4cfd35770246035ca0f44a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1152_jpg.rf.03cbae54ebff2d57e81dcb0250dee09a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1153_jpg.rf.b59c31b61e456203894aac5d16e37a72",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1154_jpg.rf.95410389f55a7354c642f50a020306e3",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1155_jpg.rf.1c33af2acc98ce486b24c64097781c37",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1156_jpg.rf.bcd3c96ebdc53a57db9a9ff3acb0fac1",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1157_jpg.rf.4b5120c41303766a345fcd0dbf843e9c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1158_jpg.rf.5bb3aaef56737854a5469e4f620d638c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1159_jpg.rf.fe9aef12ebfee41b069f942044d5c96e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1160_jpg.rf.15297de566db22ee644dc8a98f9a9238",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1161_jpg.rf.a0cdd811fb2595e8728621595542d6e7",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1162_jpg.rf.14cbf4d05dbabdbb4cb5b8f69247b057",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1163_jpg.rf.33d61ca8bb311c7052b08e45fe0bd038",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1164_jpg.rf.a25b5968368d3c1d34cabf612203f345",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1165_jpg.rf.bb4c14a748244473a668de11980f42bc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1166_jpg.rf.a4b9c9d434d8c8aa238bed183c1dcee8",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1167_jpg.rf.f81760980b72662ba306a464d4bdbe4f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1168_jpg.rf.dd7ef8d5749c7b34a21187ede4dcf711",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1169_jpg.rf.323e9e7dbbc8f3623e2b30effa89deee",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1170_jpg.rf.a53ff598342103000f26c24fd0d103f7",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1171_jpg.rf.51d8831586d0707c6c42b368630efbde",
+      "gt_count": 3,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1172_jpg.rf.91743d4dd8eb3988a363b246d99c504a",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1173_jpg.rf.a6832aa5d89cb2a8af65226bf253f18e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1174_jpg.rf.38a26444b60ce4e0cac0c8605c6fe2c0",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1175_jpg.rf.fbdf519a2d49e279b77478aa69e1d189",
+      "gt_count": 11,
+      "pred_count": 8,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1177_jpg.rf.c7f9b68b5ef74e026c4945e179f618c5",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1178_jpg.rf.10c9e86354f7c0451b0b6da9cabb7bef",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1179_jpg.rf.af4db44f45d530bc95f112329bfe4056",
+      "gt_count": 9,
+      "pred_count": 11,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1180_jpg.rf.1478ccfd9ba9ac500494fd10f4b9ace9",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1181_jpg.rf.610198d40f590e37a159ebdba9472306",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1182_jpg.rf.e4f04a13faeb4ef0c42c75e1aa8395d2",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1183_jpg.rf.ed41a17f51b1d0fff4ca290721b17ac4",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1184_jpg.rf.aaa6c851dc21e0cb39a83c82fe94ac0a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1185_jpg.rf.1ee6c77347a3942b35342e1aa788e801",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1186_jpg.rf.549a313f77c9a3d950346d39815df85f",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1187_jpg.rf.870abcb1e0a20af9b38d58304dbd8d72",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1188_jpg.rf.33b3f0c1933f12ccde6a1edec8eccc0e",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1189_jpg.rf.2cb1a9ab430c4214f2724513451fcde4",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1190_jpg.rf.1f969c4c5fcd66562fd0bfe82d1bc9be",
+      "gt_count": 121,
+      "pred_count": 115,
+      "abs_err": 6
+     },
+     {
+      "stem": "IMG_1191_jpg.rf.1e011df078b0512e7d12dbbeff558c64",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1192_jpg.rf.468ff62c74069d3cb3d9cf2116b80f9b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1193_jpg.rf.60b0eee9d661520afdf1711a083d95fc",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1194_jpg.rf.5f6713a9e5c94cca7b7a165fb96f5212",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     }
+    ],
+    "predict_time_s": 16.1
+   },
+   "nms_off": {
+    "precision": 0.8306,
+    "recall": 0.8414,
+    "count_MAE": 0.6829,
+    "box_mAP50": 0.8181,
+    "N_preds": 779,
+    "per_image": [
+     {
+      "stem": "IMG_1069_jpg.rf.076fcdc71891ec43320f10db71078f70",
+      "gt_count": 68,
+      "pred_count": 76,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1070_jpg.rf.26afa91b934ae1ed78e152937de90068",
+      "gt_count": 55,
+      "pred_count": 63,
+      "abs_err": 8
+     },
+     {
+      "stem": "IMG_1071_jpg.rf.0f83f25a29b8e5b506bebf53763ad12b",
+      "gt_count": 27,
+      "pred_count": 28,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1072_jpg.rf.d7e664470db82ff486523dcc771127af",
+      "gt_count": 13,
+      "pred_count": 11,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1073_jpg.rf.b42c731082c959276a36316facaf424b",
+      "gt_count": 11,
+      "pred_count": 10,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1075_jpg.rf.ac7a95e228c4ef630cee72a84e92d58d",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1076_jpg.rf.67f22a0d2d5386edd23de2141f7b5adb",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1078_jpg.rf.16d9177875a7986a363361fd926ea5ca",
+      "gt_count": 7,
+      "pred_count": 7,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1079_jpg.rf.750305021a8537080db89473afd99143",
+      "gt_count": 36,
+      "pred_count": 32,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1080_jpg.rf.206bf920deee171a23a57c447ca093b5",
+      "gt_count": 7,
+      "pred_count": 6,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1081_jpg.rf.a1f4e203fc5c54a61688ac8f3f32068a",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1082_jpg.rf.4a28a3e13ee8bda566f7a66d7f08a1ae",
+      "gt_count": 4,
+      "pred_count": 5,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1083_jpg.rf.fc8a11104d5f0c19e5b310aaa04b66f7",
+      "gt_count": 8,
+      "pred_count": 3,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1084_jpg.rf.d4db07bc2e9e27503825821ac8f778a5",
+      "gt_count": 6,
+      "pred_count": 7,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1085_jpg.rf.efabe910878e6e9a01b2b0e158664b66",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1086_jpg.rf.2dd228b6f34dbe6edf7ba1f41866fd7d",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1087_jpg.rf.661edf66fc09c9749ea008087e1ca7ca",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1088_jpg.rf.dbdb8cf0c6bbf3aa05be6d0e2ade1b3c",
+      "gt_count": 3,
+      "pred_count": 1,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1089_jpg.rf.54d3d43cc764ce13ead423e8361238f0",
+      "gt_count": 10,
+      "pred_count": 9,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1090_jpg.rf.ad44140a759370646c897e1a397fbac0",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1091_jpg.rf.9566047a0e5cf557eaa483c0b15aaee9",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1092_jpg.rf.471752d34f17d147b2f17ed59c0533f2",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1093_jpg.rf.d378021c00a4a470a95756da0c350650",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1094_jpg.rf.2175886c01eeef7f32da62fd029354c4",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1095_jpg.rf.199a0daef68d6d74c2858f41924581cc",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1096_jpg.rf.a4df5a210ceb410afb014e4cfd09f0a0",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1097_jpg.rf.c0d043a3ba484713a33077d601edca6d",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1098_jpg.rf.88489587e8a7508d286e82c4f68f1e2c",
+      "gt_count": 4,
+      "pred_count": 6,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1099_jpg.rf.a67159abf20b4faaa12b3ca728084f51",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1100_jpg.rf.aa3dbb6ac6428987c591a1d63cb62fb4",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1101_jpg.rf.8a348c6f98f4edd556f36d716273b82e",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1102_jpg.rf.b31ff0a8de97b15ac8606c5a0efc7b02",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1103_jpg.rf.7fbb3b4ca2ba73f2c73818dc311adf71",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1104_jpg.rf.f3f374b63d2b3feb8dce67fbb628bf98",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1105_jpg.rf.d93af6ca6e971bf00072eb608881a35e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1106_jpg.rf.de1e09a8cb93c1a414f97221f980c6f0",
+      "gt_count": 31,
+      "pred_count": 28,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1107_jpg.rf.69b6ca4e8c0fee7027f52ca57f063efe",
+      "gt_count": 79,
+      "pred_count": 78,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1108_jpg.rf.afc70c9df0cfa0b18ac34de4695b4827",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1109_jpg.rf.351a9c9bd35c44a3d04f93468ff4345f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1110_jpg.rf.3247d7228b92f34036e580f07716d866",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1111_jpg.rf.dcc1532d9c58ffd1a93dbc0e2ab49cbd",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1112_jpg.rf.493f7f166094af8273b3a5a05d11066b",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1113_jpg.rf.d3f53e6d3b568f35685b7df9713892f6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1114_jpg.rf.fdea72ce414b9dda54bc842c4164136b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1115_jpg.rf.67d98aaaa721405fddea463d02d9fe9a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1116_jpg.rf.5658783c86c17a8a5df910d0dfcdbeef",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1117_jpg.rf.a25c8026d1234df8abb7be683568a981",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1118_jpg.rf.15de731b762906527705554818fcf41d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1119_jpg.rf.2386b943cf83ea2b88a474d80ddb0189",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1120_jpg.rf.cb34e5d955ef064ebdf92b8c2199ab40",
+      "gt_count": 9,
+      "pred_count": 9,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1121_jpg.rf.3f23a6338564e8bc53b244b2d0bbae2c",
+      "gt_count": 8,
+      "pred_count": 4,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1122_jpg.rf.aa07ecb328e696a0d6b91ac8ed8ea21b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1123_jpg.rf.3a34343b050252972c00072aee5bb04b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1124_jpg.rf.044fbba68cee0c305925fd23551a3cfc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1125_jpg.rf.c9aac5d6ba0b80941fc9ac15ee5ca9e6",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1126_jpg.rf.0960746330bb542eae54597ac9dee67c",
+      "gt_count": 48,
+      "pred_count": 51,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1127_jpg.rf.dcd08a3060d59c835d3307984d4185e7",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1128_jpg.rf.30791173bdb552e9350c08ca0559383f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1129_jpg.rf.c636d2dd79ba5e580400143710a957c1",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1130_jpg.rf.5b013e28f5665a6cc7ffe43b9d68e177",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1131_jpg.rf.ee3287a1ea7611af1c751f942d75a85f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1132_jpg.rf.8cb55995a92d046991ef16681759d04a",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1133_jpg.rf.b4a25c4e83557fe4a8254492e741ce83",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1134_jpg.rf.7899249423cff7c25bc586375b22f336",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1135_jpg.rf.182f47d5c5a02afcfe8074730c014e47",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1136_jpg.rf.643dc713ba4338b9a4b694fcce8194be",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1137_jpg.rf.de3045eecc17eb21786644aee7baaa68",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1138_jpg.rf.cfcbcd6b6d5cf0693bd86995680080ce",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1139_jpg.rf.44e6e075844643c043aa1ebdc1229640",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1140_jpg.rf.c1f47fdb5c5f6c4cadb7ac3fb1241986",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1141_jpg.rf.27a79627b57ef264ac2c0a7d510d6cf6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1142_jpg.rf.ea4c60ae9cf6d955f3ae1824f56527cc",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1143_jpg.rf.16a8e59fa8ff0c81217523936e20f676",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1144_jpg.rf.2663bd517f91c17163a8eecba5f62c9e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1145_jpg.rf.08497c7f18d626224a9dbb6bd5e2926b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1146_jpg.rf.decc558d5004cad8b365d6965f86d285",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1147_jpg.rf.638cd33ae5d740458600d08fe7430056",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1148_jpg.rf.14d8e6c7ecef73cf226cb30e31fec1b6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1149_jpg.rf.0328c64e95d39a9dc53525beaf8dd2c9",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1150_jpg.rf.8d35da9f4dcfdd70a231368f13957c50",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1151_jpg.rf.d00bf3d0ca4cfd35770246035ca0f44a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1152_jpg.rf.03cbae54ebff2d57e81dcb0250dee09a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1153_jpg.rf.b59c31b61e456203894aac5d16e37a72",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1154_jpg.rf.95410389f55a7354c642f50a020306e3",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1155_jpg.rf.1c33af2acc98ce486b24c64097781c37",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1156_jpg.rf.bcd3c96ebdc53a57db9a9ff3acb0fac1",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1157_jpg.rf.4b5120c41303766a345fcd0dbf843e9c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1158_jpg.rf.5bb3aaef56737854a5469e4f620d638c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1159_jpg.rf.fe9aef12ebfee41b069f942044d5c96e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1160_jpg.rf.15297de566db22ee644dc8a98f9a9238",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1161_jpg.rf.a0cdd811fb2595e8728621595542d6e7",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1162_jpg.rf.14cbf4d05dbabdbb4cb5b8f69247b057",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1163_jpg.rf.33d61ca8bb311c7052b08e45fe0bd038",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1164_jpg.rf.a25b5968368d3c1d34cabf612203f345",
+      "gt_count": 3,
+      "pred_count": 7,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1165_jpg.rf.bb4c14a748244473a668de11980f42bc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1166_jpg.rf.a4b9c9d434d8c8aa238bed183c1dcee8",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1167_jpg.rf.f81760980b72662ba306a464d4bdbe4f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1168_jpg.rf.dd7ef8d5749c7b34a21187ede4dcf711",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1169_jpg.rf.323e9e7dbbc8f3623e2b30effa89deee",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1170_jpg.rf.a53ff598342103000f26c24fd0d103f7",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1171_jpg.rf.51d8831586d0707c6c42b368630efbde",
+      "gt_count": 3,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1172_jpg.rf.91743d4dd8eb3988a363b246d99c504a",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1173_jpg.rf.a6832aa5d89cb2a8af65226bf253f18e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1174_jpg.rf.38a26444b60ce4e0cac0c8605c6fe2c0",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1175_jpg.rf.fbdf519a2d49e279b77478aa69e1d189",
+      "gt_count": 11,
+      "pred_count": 9,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1177_jpg.rf.c7f9b68b5ef74e026c4945e179f618c5",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1178_jpg.rf.10c9e86354f7c0451b0b6da9cabb7bef",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1179_jpg.rf.af4db44f45d530bc95f112329bfe4056",
+      "gt_count": 9,
+      "pred_count": 14,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1180_jpg.rf.1478ccfd9ba9ac500494fd10f4b9ace9",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1181_jpg.rf.610198d40f590e37a159ebdba9472306",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1182_jpg.rf.e4f04a13faeb4ef0c42c75e1aa8395d2",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1183_jpg.rf.ed41a17f51b1d0fff4ca290721b17ac4",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1184_jpg.rf.aaa6c851dc21e0cb39a83c82fe94ac0a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1185_jpg.rf.1ee6c77347a3942b35342e1aa788e801",
+      "gt_count": 2,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1186_jpg.rf.549a313f77c9a3d950346d39815df85f",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1187_jpg.rf.870abcb1e0a20af9b38d58304dbd8d72",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1188_jpg.rf.33b3f0c1933f12ccde6a1edec8eccc0e",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1189_jpg.rf.2cb1a9ab430c4214f2724513451fcde4",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1190_jpg.rf.1f969c4c5fcd66562fd0bfe82d1bc9be",
+      "gt_count": 121,
+      "pred_count": 126,
+      "abs_err": 5
+     },
+     {
+      "stem": "IMG_1191_jpg.rf.1e011df078b0512e7d12dbbeff558c64",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1192_jpg.rf.468ff62c74069d3cb3d9cf2116b80f9b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1193_jpg.rf.60b0eee9d661520afdf1711a083d95fc",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1194_jpg.rf.5f6713a9e5c94cca7b7a165fb96f5212",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     }
+    ],
+    "predict_time_s": 11.9
+   },
+   "delta_on_minus_off": {
+    "precision": 0.0688,
+    "recall": -0.0039,
+    "count_MAE": -0.0569,
+    "box_mAP50": 0.0023,
+    "N_preds": -63
+   }
+  },
+  "rf-detr-seg-large": {
+   "ckpt": "/home/user/bench_any/runs/segment/african-penguin_rf-detr-seg-large_b2_e125_i640_be32_fair_grid/checkpoint_best_total.pth",
+   "conf": 0.01,
+   "nms_on": {
+    "precision": 0.9704,
+    "recall": 0.8518,
+    "count_MAE": 0.8455,
+    "box_mAP50": 0.8397,
+    "N_preds": 675,
+    "per_image": [
+     {
+      "stem": "IMG_1069_jpg.rf.076fcdc71891ec43320f10db71078f70",
+      "gt_count": 68,
+      "pred_count": 57,
+      "abs_err": 11
+     },
+     {
+      "stem": "IMG_1070_jpg.rf.26afa91b934ae1ed78e152937de90068",
+      "gt_count": 55,
+      "pred_count": 46,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1071_jpg.rf.0f83f25a29b8e5b506bebf53763ad12b",
+      "gt_count": 27,
+      "pred_count": 23,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1072_jpg.rf.d7e664470db82ff486523dcc771127af",
+      "gt_count": 13,
+      "pred_count": 11,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1073_jpg.rf.b42c731082c959276a36316facaf424b",
+      "gt_count": 11,
+      "pred_count": 11,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1075_jpg.rf.ac7a95e228c4ef630cee72a84e92d58d",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1076_jpg.rf.67f22a0d2d5386edd23de2141f7b5adb",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1078_jpg.rf.16d9177875a7986a363361fd926ea5ca",
+      "gt_count": 7,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1079_jpg.rf.750305021a8537080db89473afd99143",
+      "gt_count": 36,
+      "pred_count": 26,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1080_jpg.rf.206bf920deee171a23a57c447ca093b5",
+      "gt_count": 7,
+      "pred_count": 3,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1081_jpg.rf.a1f4e203fc5c54a61688ac8f3f32068a",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1082_jpg.rf.4a28a3e13ee8bda566f7a66d7f08a1ae",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1083_jpg.rf.fc8a11104d5f0c19e5b310aaa04b66f7",
+      "gt_count": 8,
+      "pred_count": 5,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1084_jpg.rf.d4db07bc2e9e27503825821ac8f778a5",
+      "gt_count": 6,
+      "pred_count": 6,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1085_jpg.rf.efabe910878e6e9a01b2b0e158664b66",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1086_jpg.rf.2dd228b6f34dbe6edf7ba1f41866fd7d",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1087_jpg.rf.661edf66fc09c9749ea008087e1ca7ca",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1088_jpg.rf.dbdb8cf0c6bbf3aa05be6d0e2ade1b3c",
+      "gt_count": 3,
+      "pred_count": 1,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1089_jpg.rf.54d3d43cc764ce13ead423e8361238f0",
+      "gt_count": 10,
+      "pred_count": 10,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1090_jpg.rf.ad44140a759370646c897e1a397fbac0",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1091_jpg.rf.9566047a0e5cf557eaa483c0b15aaee9",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1092_jpg.rf.471752d34f17d147b2f17ed59c0533f2",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1093_jpg.rf.d378021c00a4a470a95756da0c350650",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1094_jpg.rf.2175886c01eeef7f32da62fd029354c4",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1095_jpg.rf.199a0daef68d6d74c2858f41924581cc",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1096_jpg.rf.a4df5a210ceb410afb014e4cfd09f0a0",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1097_jpg.rf.c0d043a3ba484713a33077d601edca6d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1098_jpg.rf.88489587e8a7508d286e82c4f68f1e2c",
+      "gt_count": 4,
+      "pred_count": 5,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1099_jpg.rf.a67159abf20b4faaa12b3ca728084f51",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1100_jpg.rf.aa3dbb6ac6428987c591a1d63cb62fb4",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1101_jpg.rf.8a348c6f98f4edd556f36d716273b82e",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1102_jpg.rf.b31ff0a8de97b15ac8606c5a0efc7b02",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1103_jpg.rf.7fbb3b4ca2ba73f2c73818dc311adf71",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1104_jpg.rf.f3f374b63d2b3feb8dce67fbb628bf98",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1105_jpg.rf.d93af6ca6e971bf00072eb608881a35e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1106_jpg.rf.de1e09a8cb93c1a414f97221f980c6f0",
+      "gt_count": 31,
+      "pred_count": 29,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1107_jpg.rf.69b6ca4e8c0fee7027f52ca57f063efe",
+      "gt_count": 79,
+      "pred_count": 65,
+      "abs_err": 14
+     },
+     {
+      "stem": "IMG_1108_jpg.rf.afc70c9df0cfa0b18ac34de4695b4827",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1109_jpg.rf.351a9c9bd35c44a3d04f93468ff4345f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1110_jpg.rf.3247d7228b92f34036e580f07716d866",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1111_jpg.rf.dcc1532d9c58ffd1a93dbc0e2ab49cbd",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1112_jpg.rf.493f7f166094af8273b3a5a05d11066b",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1113_jpg.rf.d3f53e6d3b568f35685b7df9713892f6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1114_jpg.rf.fdea72ce414b9dda54bc842c4164136b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1115_jpg.rf.67d98aaaa721405fddea463d02d9fe9a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1116_jpg.rf.5658783c86c17a8a5df910d0dfcdbeef",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1117_jpg.rf.a25c8026d1234df8abb7be683568a981",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1118_jpg.rf.15de731b762906527705554818fcf41d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1119_jpg.rf.2386b943cf83ea2b88a474d80ddb0189",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1120_jpg.rf.cb34e5d955ef064ebdf92b8c2199ab40",
+      "gt_count": 9,
+      "pred_count": 9,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1121_jpg.rf.3f23a6338564e8bc53b244b2d0bbae2c",
+      "gt_count": 8,
+      "pred_count": 4,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1122_jpg.rf.aa07ecb328e696a0d6b91ac8ed8ea21b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1123_jpg.rf.3a34343b050252972c00072aee5bb04b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1124_jpg.rf.044fbba68cee0c305925fd23551a3cfc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1125_jpg.rf.c9aac5d6ba0b80941fc9ac15ee5ca9e6",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1126_jpg.rf.0960746330bb542eae54597ac9dee67c",
+      "gt_count": 48,
+      "pred_count": 47,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1127_jpg.rf.dcd08a3060d59c835d3307984d4185e7",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1128_jpg.rf.30791173bdb552e9350c08ca0559383f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1129_jpg.rf.c636d2dd79ba5e580400143710a957c1",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1130_jpg.rf.5b013e28f5665a6cc7ffe43b9d68e177",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1131_jpg.rf.ee3287a1ea7611af1c751f942d75a85f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1132_jpg.rf.8cb55995a92d046991ef16681759d04a",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1133_jpg.rf.b4a25c4e83557fe4a8254492e741ce83",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1134_jpg.rf.7899249423cff7c25bc586375b22f336",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1135_jpg.rf.182f47d5c5a02afcfe8074730c014e47",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1136_jpg.rf.643dc713ba4338b9a4b694fcce8194be",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1137_jpg.rf.de3045eecc17eb21786644aee7baaa68",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1138_jpg.rf.cfcbcd6b6d5cf0693bd86995680080ce",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1139_jpg.rf.44e6e075844643c043aa1ebdc1229640",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1140_jpg.rf.c1f47fdb5c5f6c4cadb7ac3fb1241986",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1141_jpg.rf.27a79627b57ef264ac2c0a7d510d6cf6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1142_jpg.rf.ea4c60ae9cf6d955f3ae1824f56527cc",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1143_jpg.rf.16a8e59fa8ff0c81217523936e20f676",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1144_jpg.rf.2663bd517f91c17163a8eecba5f62c9e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1145_jpg.rf.08497c7f18d626224a9dbb6bd5e2926b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1146_jpg.rf.decc558d5004cad8b365d6965f86d285",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1147_jpg.rf.638cd33ae5d740458600d08fe7430056",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1148_jpg.rf.14d8e6c7ecef73cf226cb30e31fec1b6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1149_jpg.rf.0328c64e95d39a9dc53525beaf8dd2c9",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1150_jpg.rf.8d35da9f4dcfdd70a231368f13957c50",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1151_jpg.rf.d00bf3d0ca4cfd35770246035ca0f44a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1152_jpg.rf.03cbae54ebff2d57e81dcb0250dee09a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1153_jpg.rf.b59c31b61e456203894aac5d16e37a72",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1154_jpg.rf.95410389f55a7354c642f50a020306e3",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1155_jpg.rf.1c33af2acc98ce486b24c64097781c37",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1156_jpg.rf.bcd3c96ebdc53a57db9a9ff3acb0fac1",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1157_jpg.rf.4b5120c41303766a345fcd0dbf843e9c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1158_jpg.rf.5bb3aaef56737854a5469e4f620d638c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1159_jpg.rf.fe9aef12ebfee41b069f942044d5c96e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1160_jpg.rf.15297de566db22ee644dc8a98f9a9238",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1161_jpg.rf.a0cdd811fb2595e8728621595542d6e7",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1162_jpg.rf.14cbf4d05dbabdbb4cb5b8f69247b057",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1163_jpg.rf.33d61ca8bb311c7052b08e45fe0bd038",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1164_jpg.rf.a25b5968368d3c1d34cabf612203f345",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1165_jpg.rf.bb4c14a748244473a668de11980f42bc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1166_jpg.rf.a4b9c9d434d8c8aa238bed183c1dcee8",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1167_jpg.rf.f81760980b72662ba306a464d4bdbe4f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1168_jpg.rf.dd7ef8d5749c7b34a21187ede4dcf711",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1169_jpg.rf.323e9e7dbbc8f3623e2b30effa89deee",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1170_jpg.rf.a53ff598342103000f26c24fd0d103f7",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1171_jpg.rf.51d8831586d0707c6c42b368630efbde",
+      "gt_count": 3,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1172_jpg.rf.91743d4dd8eb3988a363b246d99c504a",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1173_jpg.rf.a6832aa5d89cb2a8af65226bf253f18e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1174_jpg.rf.38a26444b60ce4e0cac0c8605c6fe2c0",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1175_jpg.rf.fbdf519a2d49e279b77478aa69e1d189",
+      "gt_count": 11,
+      "pred_count": 8,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1177_jpg.rf.c7f9b68b5ef74e026c4945e179f618c5",
+      "gt_count": 5,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1178_jpg.rf.10c9e86354f7c0451b0b6da9cabb7bef",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1179_jpg.rf.af4db44f45d530bc95f112329bfe4056",
+      "gt_count": 9,
+      "pred_count": 9,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1180_jpg.rf.1478ccfd9ba9ac500494fd10f4b9ace9",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1181_jpg.rf.610198d40f590e37a159ebdba9472306",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1182_jpg.rf.e4f04a13faeb4ef0c42c75e1aa8395d2",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1183_jpg.rf.ed41a17f51b1d0fff4ca290721b17ac4",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1184_jpg.rf.aaa6c851dc21e0cb39a83c82fe94ac0a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1185_jpg.rf.1ee6c77347a3942b35342e1aa788e801",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1186_jpg.rf.549a313f77c9a3d950346d39815df85f",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1187_jpg.rf.870abcb1e0a20af9b38d58304dbd8d72",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1188_jpg.rf.33b3f0c1933f12ccde6a1edec8eccc0e",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1189_jpg.rf.2cb1a9ab430c4214f2724513451fcde4",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1190_jpg.rf.1f969c4c5fcd66562fd0bfe82d1bc9be",
+      "gt_count": 121,
+      "pred_count": 109,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1191_jpg.rf.1e011df078b0512e7d12dbbeff558c64",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1192_jpg.rf.468ff62c74069d3cb3d9cf2116b80f9b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1193_jpg.rf.60b0eee9d661520afdf1711a083d95fc",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1194_jpg.rf.5f6713a9e5c94cca7b7a165fb96f5212",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     }
+    ],
+    "predict_time_s": 22.7
+   },
+   "nms_off": {
+    "precision": 0.9675,
+    "recall": 0.8518,
+    "count_MAE": 0.8293,
+    "box_mAP50": 0.8397,
+    "N_preds": 677,
+    "per_image": [
+     {
+      "stem": "IMG_1069_jpg.rf.076fcdc71891ec43320f10db71078f70",
+      "gt_count": 68,
+      "pred_count": 59,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1070_jpg.rf.26afa91b934ae1ed78e152937de90068",
+      "gt_count": 55,
+      "pred_count": 46,
+      "abs_err": 9
+     },
+     {
+      "stem": "IMG_1071_jpg.rf.0f83f25a29b8e5b506bebf53763ad12b",
+      "gt_count": 27,
+      "pred_count": 23,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1072_jpg.rf.d7e664470db82ff486523dcc771127af",
+      "gt_count": 13,
+      "pred_count": 11,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1073_jpg.rf.b42c731082c959276a36316facaf424b",
+      "gt_count": 11,
+      "pred_count": 11,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1075_jpg.rf.ac7a95e228c4ef630cee72a84e92d58d",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1076_jpg.rf.67f22a0d2d5386edd23de2141f7b5adb",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1078_jpg.rf.16d9177875a7986a363361fd926ea5ca",
+      "gt_count": 7,
+      "pred_count": 4,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1079_jpg.rf.750305021a8537080db89473afd99143",
+      "gt_count": 36,
+      "pred_count": 26,
+      "abs_err": 10
+     },
+     {
+      "stem": "IMG_1080_jpg.rf.206bf920deee171a23a57c447ca093b5",
+      "gt_count": 7,
+      "pred_count": 3,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1081_jpg.rf.a1f4e203fc5c54a61688ac8f3f32068a",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1082_jpg.rf.4a28a3e13ee8bda566f7a66d7f08a1ae",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1083_jpg.rf.fc8a11104d5f0c19e5b310aaa04b66f7",
+      "gt_count": 8,
+      "pred_count": 5,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1084_jpg.rf.d4db07bc2e9e27503825821ac8f778a5",
+      "gt_count": 6,
+      "pred_count": 6,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1085_jpg.rf.efabe910878e6e9a01b2b0e158664b66",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1086_jpg.rf.2dd228b6f34dbe6edf7ba1f41866fd7d",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1087_jpg.rf.661edf66fc09c9749ea008087e1ca7ca",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1088_jpg.rf.dbdb8cf0c6bbf3aa05be6d0e2ade1b3c",
+      "gt_count": 3,
+      "pred_count": 1,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1089_jpg.rf.54d3d43cc764ce13ead423e8361238f0",
+      "gt_count": 10,
+      "pred_count": 10,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1090_jpg.rf.ad44140a759370646c897e1a397fbac0",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1091_jpg.rf.9566047a0e5cf557eaa483c0b15aaee9",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1092_jpg.rf.471752d34f17d147b2f17ed59c0533f2",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1093_jpg.rf.d378021c00a4a470a95756da0c350650",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1094_jpg.rf.2175886c01eeef7f32da62fd029354c4",
+      "gt_count": 5,
+      "pred_count": 3,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1095_jpg.rf.199a0daef68d6d74c2858f41924581cc",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1096_jpg.rf.a4df5a210ceb410afb014e4cfd09f0a0",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1097_jpg.rf.c0d043a3ba484713a33077d601edca6d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1098_jpg.rf.88489587e8a7508d286e82c4f68f1e2c",
+      "gt_count": 4,
+      "pred_count": 5,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1099_jpg.rf.a67159abf20b4faaa12b3ca728084f51",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1100_jpg.rf.aa3dbb6ac6428987c591a1d63cb62fb4",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1101_jpg.rf.8a348c6f98f4edd556f36d716273b82e",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1102_jpg.rf.b31ff0a8de97b15ac8606c5a0efc7b02",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1103_jpg.rf.7fbb3b4ca2ba73f2c73818dc311adf71",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1104_jpg.rf.f3f374b63d2b3feb8dce67fbb628bf98",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1105_jpg.rf.d93af6ca6e971bf00072eb608881a35e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1106_jpg.rf.de1e09a8cb93c1a414f97221f980c6f0",
+      "gt_count": 31,
+      "pred_count": 29,
+      "abs_err": 2
+     },
+     {
+      "stem": "IMG_1107_jpg.rf.69b6ca4e8c0fee7027f52ca57f063efe",
+      "gt_count": 79,
+      "pred_count": 65,
+      "abs_err": 14
+     },
+     {
+      "stem": "IMG_1108_jpg.rf.afc70c9df0cfa0b18ac34de4695b4827",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1109_jpg.rf.351a9c9bd35c44a3d04f93468ff4345f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1110_jpg.rf.3247d7228b92f34036e580f07716d866",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1111_jpg.rf.dcc1532d9c58ffd1a93dbc0e2ab49cbd",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1112_jpg.rf.493f7f166094af8273b3a5a05d11066b",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1113_jpg.rf.d3f53e6d3b568f35685b7df9713892f6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1114_jpg.rf.fdea72ce414b9dda54bc842c4164136b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1115_jpg.rf.67d98aaaa721405fddea463d02d9fe9a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1116_jpg.rf.5658783c86c17a8a5df910d0dfcdbeef",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1117_jpg.rf.a25c8026d1234df8abb7be683568a981",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1118_jpg.rf.15de731b762906527705554818fcf41d",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1119_jpg.rf.2386b943cf83ea2b88a474d80ddb0189",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1120_jpg.rf.cb34e5d955ef064ebdf92b8c2199ab40",
+      "gt_count": 9,
+      "pred_count": 9,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1121_jpg.rf.3f23a6338564e8bc53b244b2d0bbae2c",
+      "gt_count": 8,
+      "pred_count": 4,
+      "abs_err": 4
+     },
+     {
+      "stem": "IMG_1122_jpg.rf.aa07ecb328e696a0d6b91ac8ed8ea21b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1123_jpg.rf.3a34343b050252972c00072aee5bb04b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1124_jpg.rf.044fbba68cee0c305925fd23551a3cfc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1125_jpg.rf.c9aac5d6ba0b80941fc9ac15ee5ca9e6",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1126_jpg.rf.0960746330bb542eae54597ac9dee67c",
+      "gt_count": 48,
+      "pred_count": 47,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1127_jpg.rf.dcd08a3060d59c835d3307984d4185e7",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1128_jpg.rf.30791173bdb552e9350c08ca0559383f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1129_jpg.rf.c636d2dd79ba5e580400143710a957c1",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1130_jpg.rf.5b013e28f5665a6cc7ffe43b9d68e177",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1131_jpg.rf.ee3287a1ea7611af1c751f942d75a85f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1132_jpg.rf.8cb55995a92d046991ef16681759d04a",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1133_jpg.rf.b4a25c4e83557fe4a8254492e741ce83",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1134_jpg.rf.7899249423cff7c25bc586375b22f336",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1135_jpg.rf.182f47d5c5a02afcfe8074730c014e47",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1136_jpg.rf.643dc713ba4338b9a4b694fcce8194be",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1137_jpg.rf.de3045eecc17eb21786644aee7baaa68",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1138_jpg.rf.cfcbcd6b6d5cf0693bd86995680080ce",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1139_jpg.rf.44e6e075844643c043aa1ebdc1229640",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1140_jpg.rf.c1f47fdb5c5f6c4cadb7ac3fb1241986",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1141_jpg.rf.27a79627b57ef264ac2c0a7d510d6cf6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1142_jpg.rf.ea4c60ae9cf6d955f3ae1824f56527cc",
+      "gt_count": 2,
+      "pred_count": 1,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1143_jpg.rf.16a8e59fa8ff0c81217523936e20f676",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1144_jpg.rf.2663bd517f91c17163a8eecba5f62c9e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1145_jpg.rf.08497c7f18d626224a9dbb6bd5e2926b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1146_jpg.rf.decc558d5004cad8b365d6965f86d285",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1147_jpg.rf.638cd33ae5d740458600d08fe7430056",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1148_jpg.rf.14d8e6c7ecef73cf226cb30e31fec1b6",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1149_jpg.rf.0328c64e95d39a9dc53525beaf8dd2c9",
+      "gt_count": 1,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1150_jpg.rf.8d35da9f4dcfdd70a231368f13957c50",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1151_jpg.rf.d00bf3d0ca4cfd35770246035ca0f44a",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1152_jpg.rf.03cbae54ebff2d57e81dcb0250dee09a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1153_jpg.rf.b59c31b61e456203894aac5d16e37a72",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1154_jpg.rf.95410389f55a7354c642f50a020306e3",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1155_jpg.rf.1c33af2acc98ce486b24c64097781c37",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1156_jpg.rf.bcd3c96ebdc53a57db9a9ff3acb0fac1",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1157_jpg.rf.4b5120c41303766a345fcd0dbf843e9c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1158_jpg.rf.5bb3aaef56737854a5469e4f620d638c",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1159_jpg.rf.fe9aef12ebfee41b069f942044d5c96e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1160_jpg.rf.15297de566db22ee644dc8a98f9a9238",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1161_jpg.rf.a0cdd811fb2595e8728621595542d6e7",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1162_jpg.rf.14cbf4d05dbabdbb4cb5b8f69247b057",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1163_jpg.rf.33d61ca8bb311c7052b08e45fe0bd038",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1164_jpg.rf.a25b5968368d3c1d34cabf612203f345",
+      "gt_count": 3,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1165_jpg.rf.bb4c14a748244473a668de11980f42bc",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1166_jpg.rf.a4b9c9d434d8c8aa238bed183c1dcee8",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1167_jpg.rf.f81760980b72662ba306a464d4bdbe4f",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1168_jpg.rf.dd7ef8d5749c7b34a21187ede4dcf711",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1169_jpg.rf.323e9e7dbbc8f3623e2b30effa89deee",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1170_jpg.rf.a53ff598342103000f26c24fd0d103f7",
+      "gt_count": 5,
+      "pred_count": 5,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1171_jpg.rf.51d8831586d0707c6c42b368630efbde",
+      "gt_count": 3,
+      "pred_count": 2,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1172_jpg.rf.91743d4dd8eb3988a363b246d99c504a",
+      "gt_count": 4,
+      "pred_count": 3,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1173_jpg.rf.a6832aa5d89cb2a8af65226bf253f18e",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1174_jpg.rf.38a26444b60ce4e0cac0c8605c6fe2c0",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1175_jpg.rf.fbdf519a2d49e279b77478aa69e1d189",
+      "gt_count": 11,
+      "pred_count": 8,
+      "abs_err": 3
+     },
+     {
+      "stem": "IMG_1177_jpg.rf.c7f9b68b5ef74e026c4945e179f618c5",
+      "gt_count": 5,
+      "pred_count": 4,
+      "abs_err": 1
+     },
+     {
+      "stem": "IMG_1178_jpg.rf.10c9e86354f7c0451b0b6da9cabb7bef",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1179_jpg.rf.af4db44f45d530bc95f112329bfe4056",
+      "gt_count": 9,
+      "pred_count": 9,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1180_jpg.rf.1478ccfd9ba9ac500494fd10f4b9ace9",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1181_jpg.rf.610198d40f590e37a159ebdba9472306",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1182_jpg.rf.e4f04a13faeb4ef0c42c75e1aa8395d2",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1183_jpg.rf.ed41a17f51b1d0fff4ca290721b17ac4",
+      "gt_count": 4,
+      "pred_count": 4,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1184_jpg.rf.aaa6c851dc21e0cb39a83c82fe94ac0a",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1185_jpg.rf.1ee6c77347a3942b35342e1aa788e801",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1186_jpg.rf.549a313f77c9a3d950346d39815df85f",
+      "gt_count": 2,
+      "pred_count": 2,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1187_jpg.rf.870abcb1e0a20af9b38d58304dbd8d72",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1188_jpg.rf.33b3f0c1933f12ccde6a1edec8eccc0e",
+      "gt_count": 3,
+      "pred_count": 3,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1189_jpg.rf.2cb1a9ab430c4214f2724513451fcde4",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1190_jpg.rf.1f969c4c5fcd66562fd0bfe82d1bc9be",
+      "gt_count": 121,
+      "pred_count": 109,
+      "abs_err": 12
+     },
+     {
+      "stem": "IMG_1191_jpg.rf.1e011df078b0512e7d12dbbeff558c64",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1192_jpg.rf.468ff62c74069d3cb3d9cf2116b80f9b",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1193_jpg.rf.60b0eee9d661520afdf1711a083d95fc",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     },
+     {
+      "stem": "IMG_1194_jpg.rf.5f6713a9e5c94cca7b7a165fb96f5212",
+      "gt_count": 1,
+      "pred_count": 1,
+      "abs_err": 0
+     }
+    ],
+    "predict_time_s": 21.0
+   },
+   "delta_on_minus_off": {
+    "precision": 0.0029,
+    "recall": 0.0,
+    "count_MAE": 0.0162,
+    "box_mAP50": 0.0,
+    "N_preds": -2
+   }
+  }
+ }
+}

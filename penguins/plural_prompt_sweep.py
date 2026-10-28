@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Plural-prompt SAM3 sweep on the gold corpora. Self-reporting.
 
 Plural prompts were dismissed on assumption rather than on data. This runs a
@@ -29,7 +30,7 @@ from sanity_sieve import mask_passes, class_agnostic_nms
 
 RUNS = Path(os.path.expanduser("~/bench_any/runs/obj2_counting"))
 D = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin")
-ANNOT = Path("/home/vorse/Dropbox/Work/PycharmProjects/cvMLCode/12_Deep/"
+ANNOT = Path("/home/user/Dropbox/Work/PycharmProjects/cvMLCode/12_Deep/"
               "EndtoEndProjects/Fish/YOLO/point_crowdsource_annotate/sam3_coco_annotator.py")
 PY = os.path.expanduser("~/cvML/bin/python")
 FINDINGS = RUNS / "FINDINGS.md"
@@ -154,7 +155,7 @@ def mask_eval(pred_json, gt_path):
     ev = COCOeval(coco_gt, coco_dt, "segm")
     ev.params.maxDets = [1, 10, 100]
     ev.evaluate(); ev.accumulate(); ev.summarize()
-    return float(ev.stats[1]), float(ev.stats[0])
+    return max(0.0, float(ev.stats[1])), max(0.0, float(ev.stats[0]))
 
 
 def main():

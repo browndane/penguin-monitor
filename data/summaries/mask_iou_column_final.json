@@ -1,0 +1,15 @@
+{
+ "per_corpus": {
+  "boulders-penguin": {
+   "mean_iou": 0.9129,
+   "n_gold": 769,
+   "n_missing_images": 0
+  }
+ },
+ "column": {
+  "manual_polygon": 1.0,
+  "sam2_from_manual_boxes": 0.8521000000000001,
+  "sam3_raw": 0.83075,
+  "sam3_sieve": 0.8287
+ }
+}

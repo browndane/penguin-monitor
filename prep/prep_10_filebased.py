@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase 1 prep_10 (file-based): per-tier mask mAP@0.5 re-eval via pycocotools COCOeval.
 
 Metric: COCO-style mask mAP at single IoU 0.5 (paper: mAP_{50}^{mask} at overlap 0.5).
@@ -153,9 +154,11 @@ def main():
     print(f"  COCO preds built: {len(pred_list)}", flush=True)
 
     tier_maps = {}
+    tier_n = {}
     for t in TIERS:
         gt_dict = build_gt_coco(tiers_manifest, t)
         n_active = sum(1 for a in gt_dict["annotations"] if a["iscrowd"] == 0)
+        tier_n[t] = n_active
         print(f"  tier {t}: {n_active} active GT", flush=True)
         ap_t = eval_tier(gt_dict, pred_list)
         tier_maps[t] = ap_t
@@ -163,6 +166,11 @@ def main():
 
     valid = [tier_maps[t] for t in TIERS if tier_maps[t] is not None]
     agg = float(np.mean(valid)) if len(valid) == 3 else None
+    # Instance-weighted aggregate beside the unweighted one; under terciles the
+    # two coincide to a rounding error.
+    scored = [t for t in TIERS if tier_maps[t] is not None]
+    w = sum(tier_n[t] for t in scored)
+    agg_iw = (sum(tier_maps[t] * tier_n[t] for t in scored) / w) if w else None
     if agg is not None:
         print(f"  AGG: {agg:.1f}% (target {TARGET['agg']}, delta {round(agg - TARGET['agg'], 1)})", flush=True)
         deltas = {t: round(tier_maps[t] - TARGET[t], 1) for t in TIERS}
@@ -205,6 +213,9 @@ def main():
         "medium": tier_maps.get("medium"),
         "hard": tier_maps.get("hard"),
         "agg": agg,
+        "agg_iw": agg_iw,
+        "n_gt_per_tier": tier_n,
+        "tiers_file": args.tiers,
         "recall": round(rec, 4),
         "target": TARGET,
         "deltas": ({t: round(tier_maps[t] - TARGET[t], 1) for t in TIERS} if agg else None),

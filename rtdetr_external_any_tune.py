@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # External RT-DETR wrapper for versions that are not loadable by Ultralytics.
 #
 # rtdetr-2: Hugging Face Transformers RTDetrV2ForObjectDetection; supports
@@ -26,6 +27,58 @@ from pathlib import Path
 import yaml
 
 from bench_schema import zero_metrics
+
+# ---------------------------------------------------------------------------
+# Best-checkpoint selection, shared by all three routes.
+#
+# Every route used to keep only weights/last.pth and score the in-memory model
+# at the end of training, so the published number was whatever the last epoch
+# happened to be. yolo_any_tune and rtdetr_any_tune both publish their best.pt,
+# so the bench was comparing a best checkpoint against a last epoch. These two
+# helpers close that gap with one implementation rather than three: the periodic
+# COCO eval each route already runs supplies the selection signal.
+# ---------------------------------------------------------------------------
+BENCH_BEST_CKPT = "best.pth"
+BENCH_BEST_METRIC = "box_mAP50_95"
+
+
+def bench_track_best(run_dir, model, ep_metrics, best_state, source_label):
+    """Save weights/best.pth whenever a periodic eval improves the fitness."""
+    if not ep_metrics:
+        return
+    import torch
+    score = float(ep_metrics.get(BENCH_BEST_METRIC) or 0.0)
+    if score <= best_state["score"]:
+        return
+    best_state["score"] = score
+    weights_dir = Path(run_dir) / "weights"
+    weights_dir.mkdir(parents=True, exist_ok=True)
+    torch.save({"model": model.state_dict(), BENCH_BEST_METRIC: score,
+                "epoch": best_state.get("epoch"),
+                "source": f"bench_any_{source_label}"},
+               weights_dir / BENCH_BEST_CKPT)
+    print(f"🏅 new best {BENCH_BEST_METRIC}={score:.4f}; saved weights/{BENCH_BEST_CKPT}",
+          flush=True)
+
+
+def bench_load_best(run_dir, model, source_label):
+    """Load weights/best.pth before the final eval. Returns True when it lands."""
+    import torch
+    path = Path(run_dir) / "weights" / BENCH_BEST_CKPT
+    if not path.is_file():
+        print(f"⚠️ {source_label}: no weights/{BENCH_BEST_CKPT}; the reported "
+              f"metrics are the LAST epoch, not the selected checkpoint")
+        return False
+    try:
+        state = torch.load(str(path), map_location="cpu", weights_only=False)
+        model.load_state_dict(state["model"], strict=False)
+        print(f"🏅 {source_label}: scoring the selected checkpoint "
+              f"({BENCH_BEST_METRIC}={float(state.get(BENCH_BEST_METRIC, 0.0)):.4f})")
+        return True
+    except Exception as exc:
+        print(f"⚠️ {source_label}: best-checkpoint load failed ({exc}); the "
+              f"reported metrics are the LAST epoch")
+        return False
 
 
 HOME_BENCH = Path.home() / "bench_any"
@@ -499,14 +552,21 @@ def train_v2(args, model_dir: str, run_dir: Path):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     processor = AutoImageProcessor.from_pretrained(model_dir)
+    # `--threads 0` means auto, not "no workers" (see yolo_any_tune.py). -1
+    # forces single-process. cvBench speed port.
+    workers = 0 if args.threads < 0 else (args.threads or min(8, os.cpu_count() or 8))
     processor.size = {"height": int(args.imgsz), "width": int(args.imgsz)}
     model = RTDetrV2ForObjectDetection.from_pretrained(
         model_dir, num_labels=1, ignore_mismatched_sizes=True,
         id2label={0: "object"}, label2id={"object": 0},
     ).to(device)
 
-    # Resume / inference-only: load trained checkpoint from the run dir
-    ckpt_path = run_dir / "weights" / "last.pth"
+    # Resume / inference-only: load trained checkpoint from the run dir. The two
+    # want different files — a resume must continue from the last epoch, an
+    # eval-only pass must score the selected checkpoint.
+    _last_ckpt = run_dir / "weights" / "last.pth"
+    _best_ckpt = run_dir / "weights" / BENCH_BEST_CKPT
+    ckpt_path = _best_ckpt if (args.inference_only and _best_ckpt.is_file()) else _last_ckpt
     if (args.resume or args.inference_only) and ckpt_path.is_file():
         state = torch.load(str(ckpt_path), map_location=device)
         model.load_state_dict(state["model"], strict=False)
@@ -517,14 +577,25 @@ def train_v2(args, model_dir: str, run_dir: Path):
     # Shared cross-framework Albumentations pipeline (only for train; eval is never augmented).
     _aug_pipe = None
     _aug_status = "native"
-    if getattr(args, "aug_policy", "native") in ("off", "fair"):
+    _policy = getattr(args, "aug_policy", "native")
+    if _policy in ("off", "fair"):
         try:
             from bench_aug import shared_albumentations_policy
-            _aug_pipe = shared_albumentations_policy(args.aug_policy, args.imgsz)
+            _aug_pipe = shared_albumentations_policy(_policy, args.imgsz)
             _aug_status = "applied"
         except Exception as _e:
             _aug_status = "unsupported"
             print(f"[bench] rtdetr_external: shared_albumentations_policy import failed: {_e}")
+    elif _policy == "native":
+        # This loader has no augmentation of its own; inherit Ultralytics' defaults
+        # so the native arm is comparable to the other frameworks' native arms.
+        try:
+            from bench_aug import ultralytics_native_albumentations
+            _aug_pipe = ultralytics_native_albumentations() or None
+            _aug_status = "ultralytics-native" if _aug_pipe else "unsupported"
+        except Exception as _e:
+            _aug_status = "unsupported"
+            print(f"[bench] rtdetr_external: ultralytics_native_albumentations failed: {_e}")
     print(f"[bench] aug_policy={getattr(args, 'aug_policy', 'native')}: rtdetr_external -> {_aug_status}")
     train_ds = YoloDetectionDataset(Path(args.data), "train", processor, aug_pipeline=_aug_pipe)
     eval_split = choose_eval_split(Path(args.data))
@@ -535,6 +606,10 @@ def train_v2(args, model_dir: str, run_dir: Path):
     eval_every = max(1, int(getattr(args, "eval_every", 10) or 10))
     # Clamp eval_every so short runs still yield ≥4 mAP points on the curve.
     eval_every = min(eval_every, max(1, int(args.epochs) // 4))
+    # Best-checkpoint selection state; the periodic eval above is the signal.
+    _bench_route = str(args.model)
+    _best_state = {"score": -1.0, "epoch": None}
+    _no_improve = 0  # bench_any: epochs since the last best-metric improvement (patience)
     print(f"🚂 RT-DETRv2 train epochs={int(args.epochs)} train_images={len(train_ds)} "
           f"eval_split={eval_split} eval_images={len(test_ds)} batch={bs} "
           f"grad_accum={accum} effective_batch={eff_bs} eval_every={eval_every}", flush=True)
@@ -543,7 +618,8 @@ def train_v2(args, model_dir: str, run_dir: Path):
     _be.yolo_split_to_coco_gt(str(Path(args.data) / "data.yaml"), eval_split, str(gt_json), one_indexed_cats=False)
     pred_json = run_dir / f"predictions_{eval_split}.json"
 
-    val_loader = DataLoader(test_ds, batch_size=bs, shuffle=False, num_workers=0, collate_fn=collate) \
+    val_loader = DataLoader(test_ds, batch_size=bs, shuffle=False, num_workers=workers,
+                            persistent_workers=workers > 0, collate_fn=collate) \
         if len(test_ds) else None
 
     wb_run = _bp.maybe_init_wandb(
@@ -601,7 +677,8 @@ def train_v2(args, model_dir: str, run_dir: Path):
         return total_v / max(1, n_v) if n_v else None
 
     if not args.inference_only and int(args.epochs) > 0 and len(train_ds):
-        loader = DataLoader(train_ds, batch_size=bs, shuffle=True, num_workers=0, collate_fn=collate)
+        loader = DataLoader(train_ds, batch_size=bs, shuffle=True, num_workers=workers,
+                            persistent_workers=workers > 0, pin_memory=True, collate_fn=collate)
         opt = torch.optim.AdamW(model.parameters(), lr=float(args.lr), weight_decay=float(args.weight_decay))
         model.train()
         total_steps = len(loader)
@@ -640,6 +717,21 @@ def train_v2(args, model_dir: str, run_dir: Path):
             ep_metrics = None
             if do_full:
                 ep_metrics, _ = _run_full_eval()
+                _best_state["epoch"] = ep + 1
+                _prev_score = _best_state["score"]
+                bench_track_best(run_dir, model, ep_metrics, _best_state, _bench_route)
+                # bench_any: wire --patience (was a dead arg). Count full-eval
+                # epochs since the last improvement on BENCH_BEST_METRIC and stop
+                # early once patience is exceeded — matches YOLO's epoch-based
+                # patience semantics. A non-positive patience disables it.
+                if _best_state["score"] > _prev_score:
+                    _no_improve = 0
+                else:
+                    _no_improve += 1
+                    if int(args.patience) > 0 and _no_improve >= int(args.patience):
+                        print(f"🛑 early stopping: no {BENCH_BEST_METRIC} improvement "
+                              f"for {_no_improve} eval epochs (patience={int(args.patience)})")
+                        break
             elapsed = time.time() - ep_t0
             print(f"epoch {ep + 1}/{int(args.epochs)}: steps={n_steps} "
                   f"train_loss={train_loss:.4f}"
@@ -656,7 +748,23 @@ def train_v2(args, model_dir: str, run_dir: Path):
             _bp.append_history(run_dir, row)
             _bp.wandb_log_safe(wb_run, row, step=ep + 1)
 
+    # Persist the last epoch. This route read weights/last.pth for --resume at
+    # L563 but never wrote it, so a resume silently restarted from the
+    # pretrained weights and reported the shortfall nowhere. Routes 2 and 3
+    # already do this; route 1 was the odd one out.
+    #
+    # Guarded on inference_only: an eval-only pass has best.pth loaded into
+    # `model`, so an unguarded save would overwrite the real last epoch with the
+    # selected checkpoint and destroy the only copy of the final weights.
+    if not args.inference_only:
+        _weights_dir = run_dir / "weights"
+        _weights_dir.mkdir(parents=True, exist_ok=True)
+        torch.save({"model": model.state_dict(),
+                    "source": "bench_any_rtdetrv2_hf"}, _weights_dir / "last.pth")
+
     # Final eval (also writes pred_json) — needed for metrics + final figures.
+    # Scored on the selected checkpoint, not the last epoch.
+    bench_load_best(run_dir, model, _bench_route)
     metrics, fps = _run_full_eval()
     if args.seg_via_sam2:
         img_dir = images_dir_for_split(Path(args.data), eval_split)
@@ -1025,7 +1133,10 @@ def train_rtdetrv2_repo(
     # Inference-only: overwrite pretrained weights with the trained
     # checkpoint from the run dir (same pattern as train_v4 L1234-1241).
     if args.inference_only:
-        trained_ckpt = run_dir / "weights" / "last.pth"
+        # Score the selected checkpoint when one exists, else the last epoch.
+        trained_ckpt = next((p for p in (run_dir / "weights" / BENCH_BEST_CKPT,
+                                         run_dir / "weights" / "last.pth")
+                             if p.is_file()), run_dir / "weights" / "last.pth")
         if trained_ckpt.is_file():
             state = torch.load(str(trained_ckpt), map_location="cpu")
             model.load_state_dict(state["model"], strict=False)
@@ -1047,6 +1158,10 @@ def train_rtdetrv2_repo(
     eval_every = max(1, int(getattr(args, "eval_every", 10) or 10))
     # Clamp eval_every so short runs still yield ≥4 mAP points on the curve.
     eval_every = min(eval_every, max(1, int(args.epochs) // 4))
+    # Best-checkpoint selection state; the periodic eval above is the signal.
+    _bench_route = str(args.model)
+    _best_state = {"score": -1.0, "epoch": None}
+    _no_improve = 0  # bench_any: epochs since the last best-metric improvement (patience)
     print(f"🚂 {route_name} train epochs={int(args.epochs)} train_images={len(train_paths)} "
           f"eval_split={eval_split} eval_images={len(eval_paths)} batch={bs} lr={lr:g} "
           f"eval_every={eval_every}", flush=True)
@@ -1160,6 +1275,21 @@ def train_rtdetrv2_repo(
             ep_metrics = None
             if do_full:
                 ep_metrics, _ = _run_full_eval()
+                _best_state["epoch"] = ep + 1
+                _prev_score = _best_state["score"]
+                bench_track_best(run_dir, model, ep_metrics, _best_state, _bench_route)
+                # bench_any: wire --patience (was a dead arg). Count full-eval
+                # epochs since the last improvement on BENCH_BEST_METRIC and stop
+                # early once patience is exceeded — matches YOLO's epoch-based
+                # patience semantics. A non-positive patience disables it.
+                if _best_state["score"] > _prev_score:
+                    _no_improve = 0
+                else:
+                    _no_improve += 1
+                    if int(args.patience) > 0 and _no_improve >= int(args.patience):
+                        print(f"🛑 early stopping: no {BENCH_BEST_METRIC} improvement "
+                              f"for {_no_improve} eval epochs (patience={int(args.patience)})")
+                        break
             elapsed = time.time() - ep_t0
             print(f"epoch {ep + 1}/{int(args.epochs)}: steps={n_steps} "
                   f"train_loss={train_loss:.4f}"
@@ -1179,9 +1309,14 @@ def train_rtdetrv2_repo(
     weights_dir = run_dir / "weights"
     weights_dir.mkdir(parents=True, exist_ok=True)
     source_label = "rtdetrv3_pytorch_compat" if source_kind == "paddle" else "rtdetrv2_pytorch_repo"
-    torch.save({"model": model.state_dict(), "source": f"bench_any_{source_label}"}, weights_dir / "last.pth")
+    # Only after real training. Under --inference_only, L1101-1109 has already
+    # loaded best.pth into `model`, so saving here would overwrite the last
+    # epoch with the selected checkpoint and lose the final weights for good.
+    if not args.inference_only:
+        torch.save({"model": model.state_dict(), "source": f"bench_any_{source_label}"}, weights_dir / "last.pth")
 
     print(f"🧪 {route_name} eval on {eval_split}: {len(eval_paths)} images")
+    bench_load_best(run_dir, model, route_name)
     metrics, fps = _run_full_eval()
     if args.seg_via_sam2:
         img_dir = images_dir_for_split(data_dir, eval_split)
@@ -1242,8 +1377,11 @@ def train_v4(args, ckpt_path: str, run_dir: Path):
     criterion = cfg.criterion.to(device)
     postprocessor = cfg.postprocessor.to(device)
 
-    # inference-only: load trained checkpoint from the run dir
-    ckpt_path = run_dir / "weights" / "last.pth"
+    # inference-only: load trained checkpoint from the run dir, preferring the
+    # selected checkpoint over the last epoch.
+    ckpt_path = next((p for p in (run_dir / "weights" / BENCH_BEST_CKPT,
+                                  run_dir / "weights" / "last.pth")
+                      if p.is_file()), run_dir / "weights" / "last.pth")
     if args.inference_only and ckpt_path.is_file():
         state = torch.load(str(ckpt_path), map_location=device)
         model.load_state_dict(state["model"], strict=False)
@@ -1258,6 +1396,10 @@ def train_v4(args, ckpt_path: str, run_dir: Path):
     eval_every = max(1, int(getattr(args, "eval_every", 10) or 10))
     # Clamp eval_every so short runs still yield ≥4 mAP points on the curve.
     eval_every = min(eval_every, max(1, int(args.epochs) // 4))
+    # Best-checkpoint selection state; the periodic eval above is the signal.
+    _bench_route = str(args.model)
+    _best_state = {"score": -1.0, "epoch": None}
+    _no_improve = 0  # bench_any: epochs since the last best-metric improvement (patience)
     print(f"🚂 RT-DETRv4-S train epochs={int(args.epochs)} train_images={len(train_paths)} "
           f"eval_split={eval_split} eval_images={len(eval_paths)} batch={bs} lr={lr:g} "
           f"eval_every={eval_every}", flush=True)
@@ -1370,6 +1512,21 @@ def train_v4(args, ckpt_path: str, run_dir: Path):
             ep_metrics = None
             if do_full:
                 ep_metrics, _ = _run_full_eval()
+                _best_state["epoch"] = ep + 1
+                _prev_score = _best_state["score"]
+                bench_track_best(run_dir, model, ep_metrics, _best_state, _bench_route)
+                # bench_any: wire --patience (was a dead arg). Count full-eval
+                # epochs since the last improvement on BENCH_BEST_METRIC and stop
+                # early once patience is exceeded — matches YOLO's epoch-based
+                # patience semantics. A non-positive patience disables it.
+                if _best_state["score"] > _prev_score:
+                    _no_improve = 0
+                else:
+                    _no_improve += 1
+                    if int(args.patience) > 0 and _no_improve >= int(args.patience):
+                        print(f"🛑 early stopping: no {BENCH_BEST_METRIC} improvement "
+                              f"for {_no_improve} eval epochs (patience={int(args.patience)})")
+                        break
             elapsed = time.time() - ep_t0
             print(f"epoch {ep + 1}/{int(args.epochs)}: steps={n_steps} "
                   f"train_loss={train_loss:.4f}"
@@ -1388,9 +1545,13 @@ def train_v4(args, ckpt_path: str, run_dir: Path):
 
     weights_dir = run_dir / "weights"
     weights_dir.mkdir(parents=True, exist_ok=True)
-    torch.save({"model": model.state_dict(), "source": "bench_any_rtdetr4"}, weights_dir / "last.pth")
+    # Only after real training — see the same guard on the v2/v3 route: an
+    # eval-only pass holds best.pth in `model` and would clobber the last epoch.
+    if not args.inference_only:
+        torch.save({"model": model.state_dict(), "source": "bench_any_rtdetr4"}, weights_dir / "last.pth")
 
     print(f"🧪 RT-DETRv4-S eval on {eval_split}: {len(eval_paths)} images")
+    bench_load_best(run_dir, model, "RT-DETRv4-S")
     metrics, fps = _run_full_eval()
     if args.seg_via_sam2:
         img_dir = images_dir_for_split(data_dir, eval_split)

@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Recover SAM3-skipped Boulders frames at downsampled long edge, write masks back to FiftyOne.
 
 Run under ~/cvML (fiftyone 1.19.0, transformers 5.13.0, Sam3Model). The DB lives at 1.19.
@@ -13,7 +14,7 @@ from transformers import Sam3Model, Sam3Processor
 import fiftyone as fo
 
 SKIPPED = ["IMG_1107.jpg", "IMG_1069.jpg", "IMG_1190.jpg", "IMG_1070.jpg"]
-BOU = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/Karen/BouldersBeachDec25/train/images")
+BOU = Path("/mnt/LinuxBackup2/Datasets_of_interest/Marine/Penguin/Partner/BouldersBeachDec25/train/images")
 LONG_EDGE = 2448
 SCORE, MASK_THR = 0.25, 0.3
 

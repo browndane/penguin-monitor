@@ -1,0 +1,90 @@
+{
+ "PW": {
+  "yolo11x_pred": {
+   "label": "YOLOv11x-seg",
+   "tiers": {
+    "easy": 84.13245598076927,
+    "medium": 71.6047478378037,
+    "hard": 17.249313766995684
+   },
+   "agg": 57.66217252852289,
+   "paper": 88.0,
+   "delta": -30.3,
+   "n_images": 50,
+   "n_gt": 1384,
+   "n_preds": 5360
+  },
+  "rtdetr_sam3_pred": {
+   "label": "RT-DETR + SAM 3 box-prompt",
+   "tiers": {
+    "easy": 81.4022412720752,
+    "medium": 80.80020349789727,
+    "hard": 14.415858699681298
+   },
+   "agg": 58.872767823217934,
+   "paper": 89.4,
+   "delta": -30.5,
+   "n_images": 50,
+   "n_gt": 1384,
+   "n_preds": 1777
+  },
+  "sam3_pred": {
+   "label": "SAM 3 + sieve (zero-shot)",
+   "tiers": {
+    "easy": 82.17204256808216,
+    "medium": 82.73740785046215,
+    "hard": 21.159411361532687
+   },
+   "agg": 62.02295392669233,
+   "paper": 89.1,
+   "delta": -27.1,
+   "n_images": 50,
+   "n_gt": 1384,
+   "n_preds": 1676
+  }
+ },
+ "iNat": {
+  "yolo11x_pred": {
+   "label": "YOLOv11x-seg",
+   "tiers": {
+    "easy": 94.45551431724188,
+    "medium": 89.93013280387584,
+    "hard": 19.437543844589676
+   },
+   "agg": 67.9410636552358,
+   "paper": 84.4,
+   "delta": -16.5,
+   "n_images": 50,
+   "n_gt": 394,
+   "n_preds": 1700
+  },
+  "rtdetr_sam3_pred": {
+   "label": "RT-DETR + SAM 3 box-prompt",
+   "tiers": {
+    "easy": 93.95670308783576,
+    "medium": 81.44375466680552,
+    "hard": 4.431656130574566
+   },
+   "agg": 59.944037961738616,
+   "paper": 86.2,
+   "delta": -26.3,
+   "n_images": 50,
+   "n_gt": 394,
+   "n_preds": 577
+  },
+  "sam3_pred": {
+   "label": "SAM 3 + sieve (zero-shot)",
+   "tiers": {
+    "easy": 93.5588590066153,
+    "medium": 96.59629698176936,
+    "hard": 28.62800565770862
+   },
+   "agg": 72.92772054869776,
+   "paper": 86.7,
+   "delta": -13.8,
+   "n_images": 50,
+   "n_gt": 394,
+   "n_preds": 491
+  }
+ }
+}

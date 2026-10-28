@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Phase 1 prep_11 (file-based): SAM3 zero-shot text-prompt predictions on a YOLO gold
 corpus, sanity-sieve sweep, final preds for eval.
 

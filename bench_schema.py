@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Shared metric schema for bench_any and its tuner wrappers.
 
 Keep this file dependency-free so every child script can import it before any
@@ -61,6 +62,12 @@ RUN_META_KEYS = ["status", "return_code", "metric_status", "manifest_path"]
 # micro_bs * grad_accum). These are informational, not scored metrics, so they
 # are kept out of ALL_METRIC_KEYS / SCORE_KEYS.
 RUN_BATCH_KEYS = ["batch_sz", "batch_effective"]
+
+# Early-stopping bookkeeping, same contract as RUN_BATCH_KEYS: informational,
+# reported by a wrapper if it knows them, never scored. ``epochs`` records the
+# configured budget, so a run that stopped on patience needs ``epochs_trained``
+# alongside it or the CSV implies a fixed-epoch comparison that did not happen.
+RUN_STOP_KEYS = ["epochs_trained", "patience"]
 
 
 def zero_metrics():

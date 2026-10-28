@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 """Build P5's figures. The paper has eight tables and no figures at all.
 
 WHY
 ---
-P5 goes to Ecological Informatics, whose readers are ecologists. A paper
+The paper goes to an ecology journal, whose readers are ecologists. A paper
 made entirely of tables reads as a computer-vision paper sent to the wrong
 venue, and that is a desk-rejection risk independent of the science. These
 three figures carry the paper's actual argument.
@@ -20,7 +21,7 @@ relying on hue separation.
 
 OUTPUT
 ------
-Vector PDFs written next to the paper, sized for a single Elsevier column,
+Vector PDFs written next to the paper, sized for a single journal column,
 plus a 400 dpi PNG of each for slides and the web. Every save is measured for
 clipping before it is accepted, because matplotlib under-measures a wide axis
 label and drops the overflow off the right edge without warning.

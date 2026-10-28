@@ -1,3 +1,4 @@
+# Written by the authors and refactored with the assistance of Claude (Anthropic, Claude Code).
 # Wraps Carti-97/DINOv3-Mask2former (HF Mask2Former + DINOv3 backbone, instance seg).
 # Mirrors yolo_any_tune.py CLI; reuses rfdetr_any_tune.py's YOLO→COCO converter.
 # USAGE: python3 dinov3_m2f_any_tune.py --data /path/to/dataset --epochs 50 --batch_sz 4 --model dinov3-m2f-smallplus
@@ -95,21 +96,34 @@ def _patch_upstream_trainer(repo_dir):
     PRUNE_STATE_MARKER = "# bench_any: keep only latest resumable state"
     WARMSTART_MARKER = "# bench_any: warm-start from weights-only dump"
     EPOCH_PRUNE_MARKER = "# bench_any: prune old weights-only epoch dirs"
+    PATIENCE_MARKER = "# bench_any: early stopping on patience"
+    # speed port (cvBench): bf16/TF32 + model-resolution rasterise. Both env-gated
+    # (BENCH_M2F_PRECISION=no restores fp32 for an A/B); the raster hunk fires on
+    # the train split only, eval keeps the native-resolution path.
+    AMP_MARKER = "# bench_any: bf16 mixed precision + TF32"
+    RASTER_MARKER = "# bench_any: rasterise at model resolution"
     if all(m in txt for m in ("# bench_any: send_example_telemetry neutralised",
                               "# bench_any: keep transformers quiet", BG, BBOX_MARKER,
                               RESUME_MARKER, PRUNE_STATE_MARKER,
-                              WARMSTART_MARKER, EPOCH_PRUNE_MARKER)):
+                              WARMSTART_MARKER, EPOCH_PRUNE_MARKER, PATIENCE_MARKER,
+                              AMP_MARKER, RASTER_MARKER)):
         return
     txt = re.sub(
         r"^[ \t]*instance_id_to_semantic_id\s*=\s*\{0:\s*0,\s*\*\*instance_id_to_semantic_id\}.*?# bench_any: include background id 0 in mapping.*?\n",
         "", txt, flags=re.MULTILINE)
-    txt = re.sub(
-        r"from\s+transformers\.utils\s+import\s+([^\n]+)",
-        lambda m: "from transformers.utils import " + ", ".join(
-            s.strip() for s in m.group(1).split(",")
-            if s.strip() and s.strip() != "send_example_telemetry"
-        ) + "  # bench_any: send_example_telemetry neutralised",
-        txt, count=1)
+    # Guarded on its own marker, not on the all-markers early return above: any
+    # later patch adding a new marker re-enters this function, and the regex
+    # matches its own output (the trailing comment is part of `[^\n]+`), so an
+    # unguarded sub appends one more copy per launch. The live upstream file had
+    # accumulated 83 of them by 2026-08-22.
+    if "# bench_any: send_example_telemetry neutralised" not in txt:
+        txt = re.sub(
+            r"from\s+transformers\.utils\s+import\s+([^\n]+)",
+            lambda m: "from transformers.utils import " + ", ".join(
+                s.strip() for s in m.group(1).split(",")
+                if s.strip() and s.strip() != "send_example_telemetry"
+            ) + "  # bench_any: send_example_telemetry neutralised",
+            txt, count=1)
     if "send_example_telemetry(" in txt and "send_example_telemetry = lambda" not in txt:
         txt = "send_example_telemetry = lambda *a, **k: None  # bench_any shim\n" + txt
     txt = txt.replace("transformers.utils.logging.set_verbosity_info()",
@@ -289,8 +303,128 @@ def _patch_upstream_trainer(repo_dir):
             "                                except Exception: pass\n"
             "                            _shutil_ep_bench.rmtree(_v_ep_bench, ignore_errors=True)\n")
 
+    # --- Early stopping ----------------------------------------------------
+    # Upstream tracks best_metric/is_best_epoch but never breaks, so every run
+    # spent its whole budget and the wrapper's --patience was dead. The stall
+    # counter is bumped where the best epoch is decided; the break happens at the
+    # TOP of the following epoch so the stopping epoch still writes best_model/
+    # and its epoch dump before the loop exits. BENCH_M2F_PATIENCE=0 disables.
+    if PATIENCE_MARKER not in txt:
+        txt = txt.replace(
+            "        is_best_epoch = current_metric > best_metric\n"
+            "        if is_best_epoch:\n",
+            "        " + PATIENCE_MARKER + "\n"
+            "        try:\n"
+            "            _pat_bench = int(os.environ.get('BENCH_M2F_PATIENCE', '0'))\n"
+            "        except Exception:\n"
+            "            _pat_bench = 0\n"
+            "        is_best_epoch = current_metric > best_metric\n"
+            "        _stall_bench = 0 if is_best_epoch else (globals().get('_stall_bench', 0) + 1)\n"
+            "        globals()['_stall_bench'] = _stall_bench\n"
+            "        if _pat_bench > 0:\n"
+            "            if _stall_bench >= _pat_bench:\n"
+            "                globals()['_stop_bench'] = True\n"
+            "                logger.info(f'⏹ bench_any early stop: {_stall_bench} epochs without "
+            "improvement >= patience {_pat_bench} (best epoch {best_epoch}, {best_metric:.4f})')\n"
+            "            else:\n"
+            "                logger.info(f'⏳ bench_any patience: {_stall_bench}/{_pat_bench} "
+            "epochs without improvement')\n"
+            "        if is_best_epoch:\n", 1)
+        txt = txt.replace(
+            "    for epoch in range(starting_epoch, args.num_train_epochs):\n"
+            "        model.train()\n",
+            "    for epoch in range(starting_epoch, args.num_train_epochs):\n"
+            "        if globals().get('_stop_bench', False):\n"
+            "            logger.info(f'⏹ bench_any early stop honoured at epoch {epoch}; "
+            "best epoch was {best_epoch}.')\n"
+            "            break\n"
+            "        model.train()\n", 1)
+
+    # ---- speed: bf16 mixed precision + TF32 (cvBench port) -------------------
+    # M2F was the only fp32 model in the bench (YOLO/RF-DETR/EoMT all run mixed
+    # precision already). bf16 needs no GradScaler and cannot overflow the
+    # mask/dice losses. BENCH_M2F_PRECISION=no restores fp32 for an A/B.
+    if AMP_MARKER not in txt:
+        _acc_call = ("    accelerator = Accelerator(gradient_accumulation_steps="
+                     "args.gradient_accumulation_steps, kwargs_handlers=[ddp_kwargs])")
+        txt = txt.replace(_acc_call,
+            f"    {AMP_MARKER}\n"
+            "    torch.set_float32_matmul_precision('high')\n"
+            "    torch.backends.cudnn.benchmark = True\n"
+            "    accelerator = Accelerator(\n"
+            "        gradient_accumulation_steps=args.gradient_accumulation_steps,\n"
+            "        mixed_precision=os.environ.get('BENCH_M2F_PRECISION', 'bf16'),\n"
+            "        kwargs_handlers=[ddp_kwargs])")
+
+    # ---- speed: rasterise instance masks at model resolution (train only) ---
+    # Upstream decodes every annotation at native resolution, ORs it into a
+    # full-res int32 canvas, augments at full res, then throws it all away in the
+    # image_processor resize. py-spy on the live vith16plus run: 18.7% of wall
+    # time in __getitem__, dominated by that per-annotation write and the
+    # np.unique over the full-res canvas. Eval keeps the native path because
+    # `original_size` drives post-processing back to source resolution.
+    if RASTER_MARKER not in txt:
+        txt = txt.replace(
+            "import numpy as np\n",
+            "import numpy as np\n"
+            "import cv2 as _bench_cv2  # bench_any\n"
+            "from pycocotools import mask as _bench_mu  # bench_any\n", 1)
+        _orig_loop = (
+            "        for i, ann in enumerate(ann_data['anns'], 1):\n"
+            "            if 'segmentation' in ann:\n"
+            "                if self.coco:\n"
+            "                    mask = self.coco.annToMask(ann)\n"
+            "                else:\n"
+            "                    mask = self._poly_to_mask(ann['segmentation'], h, w)\n"
+            "                instance_mask[mask > 0] = i\n"
+            "                instance_to_semantic[i] = ann['category_id']\n")
+        txt = txt.replace(_orig_loop,
+            f"        {RASTER_MARKER}\n"
+            "        _tgt = None\n"
+            "        if self.split == 'train':\n"
+            "            _sz = getattr(self.image_processor, 'size', None) or {}\n"
+            "            _th, _tw = int(_sz.get('height', 0) or 0), int(_sz.get('width', 0) or 0)\n"
+            "            if _th > 0 and _tw > 0 and (_th, _tw) != (h, w):\n"
+            "                _tgt = (_th, _tw)\n"
+            "        if _tgt is not None:\n"
+            "            _th, _tw = _tgt\n"
+            "            _sx, _sy = _tw / w, _th / h\n"
+            "            image = image.resize((_tw, _th), Image.BILINEAR)\n"
+            "            instance_mask = np.zeros((_th, _tw), dtype=np.int32)\n"
+            "        for i, ann in enumerate(ann_data['anns'], 1):\n"
+            "            if 'segmentation' in ann:\n"
+            "                mask = None\n"
+            "                if _tgt is not None:\n"
+            "                    try:\n"
+            "                        _seg = ann['segmentation']\n"
+            "                        if isinstance(_seg, list):\n"
+            "                            _polys = []\n"
+            "                            for _pg in _seg:\n"
+            "                                _q = np.asarray(_pg, dtype=np.float64).copy()\n"
+            "                                _q[0::2] *= _sx\n"
+            "                                _q[1::2] *= _sy\n"
+            "                                _polys.append(_q.tolist())\n"
+            "                            mask = _bench_mu.decode(_bench_mu.merge(\n"
+            "                                _bench_mu.frPyObjects(_polys, _th, _tw)))\n"
+            "                        else:\n"
+            "                            _m = (self.coco.annToMask(ann) if self.coco\n"
+            "                                  else self._poly_to_mask(_seg, h, w))\n"
+            "                            mask = _bench_cv2.resize(_m, (_tw, _th),\n"
+            "                                                     interpolation=_bench_cv2.INTER_NEAREST)\n"
+            "                    except Exception:\n"
+            "                        mask = None\n"
+            "                if mask is None:\n"
+            "                    _m = (self.coco.annToMask(ann) if self.coco\n"
+            "                          else self._poly_to_mask(ann['segmentation'], h, w))\n"
+            "                    mask = (_bench_cv2.resize(_m, (_tw, _th),\n"
+            "                                              interpolation=_bench_cv2.INTER_NEAREST)\n"
+            "                            if _tgt is not None else _m)\n"
+            "                instance_mask[mask > 0] = i\n"
+            "                instance_to_semantic[i] = ann['category_id']\n")
+
     p.write_text(txt)
-    print("🩹 Patched upstream trainer (transformers>=4.50 + bg-label + bbox mAP + resume + warm-start)")
+    print("🩹 Patched upstream trainer (transformers>=4.50 + bg-label + bbox mAP + resume "
+          "+ warm-start + early stopping + bf16/TF32 + model-resolution rasterise)")
 
 
 def _patch_upstream_model_files(repo_dir):
@@ -383,15 +517,25 @@ def warn_if_dinov3_access_missing(model_name, hub_token):
         print("    Run `huggingface-cli login` or pass --hub_token / set DINOV3_M2F_MODEL=/local/dir.")
 
 
-def harvest_metrics(run_dir):
+def harvest_metrics(run_dir, eval_split="test"):
     """Read mAP from <run_dir>/best_model/best_model_info.json (Carti-97 writes
-    instance-mask metrics there). Anything missing stays at 0.0."""
+    instance-mask metrics there). Anything missing stays at 0.0.
+
+    best_model_info.json holds the metrics of the best-scoring epoch measured on
+    the PER-EPOCH eval split, which since the 2026-08-08 real-eval fix is val(173),
+    not the reported test split. The final test pass writes its own numbers to
+    <run_dir>/all_results.json as test_*. Reading only best_model_info.json
+    therefore put validation numbers in every row labelled eval_split=test — the
+    corpus-diversity vith16plus run reported 0.6732 (val, epoch 121) where the
+    test number is 0.6256. all_results.json wins whenever it carries test_* keys;
+    best_model_info.json is the fallback, and the fallback says so out loud."""
     # Ensure we initialize with ALL keys from the bench_any schema so that
     # harvest_results_csv doesn't report 0.0 for missing keys that should be hyphenated.
     out = zero_metrics()
     info = Path(run_dir) / "best_model" / "best_model_info.json"
     if not info.is_file():
-        print(f"⚠️ {info} not found; metrics = 0"); return out
+        print(f"⚠️ {info} not found; metrics = 0")
+        return _overlay_final_eval_metrics(run_dir, out, eval_split)
     try:
         d = json.loads(info.read_text()).get("all_metrics", {}) or {}
         # Segmentation metrics (masks)
@@ -426,6 +570,42 @@ def harvest_metrics(run_dir):
                 out[dst] = max(0.0, float(d[src]))
     except Exception as e:
         print(f"⚠️ failed to parse {info}: {e}")
+    return _overlay_final_eval_metrics(run_dir, out, eval_split)
+
+
+def _overlay_final_eval_metrics(run_dir, out, eval_split="test"):
+    """Overlay <run_dir>/all_results.json test_* onto best-epoch metrics.
+
+    The upstream trainer writes all_results.json after its final pass over the
+    reported split, so test_* is the only mask metric in the run dir that was
+    actually measured on that split. Overlay it and name the source; when it is
+    absent, warn that the row is carrying best-epoch validation numbers instead
+    of silently mislabelling them."""
+    ar = Path(run_dir) / "all_results.json"
+    src = {}
+    if ar.is_file():
+        try:
+            src = json.loads(ar.read_text()) or {}
+        except Exception as e:
+            print(f"⚠️ failed to parse {ar}: {e}")
+    pairs = (("test_map", "seg_mAP50_95"), ("test_map_50", "seg_mAP50"),
+             ("test_map_75", "seg_mAP75"), ("test_mar_100", "seg_AR_100"),
+             ("test_map_small", "seg_mAP_S"), ("test_map_medium", "seg_mAP_M"),
+             ("test_map_large", "seg_mAP_L"))
+    applied = []
+    for k, dst in pairs:
+        if src.get(k) is not None:
+            out[dst] = max(0.0, float(src[k]))
+            applied.append(dst)
+    if applied:
+        print(f"📐 metric source: {ar.name} test_* (measured on the reported "
+              f"{eval_split} split) — overrode {len(applied)} key(s) from "
+              f"best_model_info.json")
+    else:
+        print(f"⚠️ metric source: best_model/best_model_info.json ONLY — these are "
+              f"BEST-EPOCH metrics on the per-epoch eval split, which is val, not "
+              f"'{eval_split}'. No test_* in all_results.json to override them. "
+              f"Do not quote this row as a {eval_split} number without checking.")
     return out
 
 
@@ -557,6 +737,11 @@ if __name__ == "__main__":
     ap.add_argument("--sam2_ckpt", default=os.environ.get("SAM2_CKPT", ""))
     ap.add_argument("--sam2_config", default=os.environ.get("SAM2_CONFIG", ""))
     args = ap.parse_args()
+    # R.6: reject fractional --batch_sz loudly. int(0.98)=0 silently zero-batches M2F
+    # (the Ultralytics-style fractional auto-batch does NOT apply here; M2F truncates).
+    if args.batch_sz < 1:
+        print(f"❌ --batch_sz must be >= 1 (got {args.batch_sz}); M2F truncates to int(bs)=0")
+        sys.exit(1)
     _m2f_aug_status = "applied" if args.aug_policy in ("off", "fair") else "native"
     print(f"[bench] aug_policy={args.aug_policy}: dinov3_m2f -> {_m2f_aug_status}")
     if args.repo_dir:
@@ -568,16 +753,24 @@ if __name__ == "__main__":
     if not DATA_YAML.exists(): print("❌ data.yaml not found"); sys.exit(1)
     DATA_NAME = ORIG_DATA.name
 
-    # Bench contract: evaluate test when present. M2F's upstream trainer only
-    # evaluates its validation dataloader, so yolo_to_coco_layout(...,
-    # eval_split_as_valid=True) maps YOLO test into generated COCO `valid/`.
+    # Bench contract: evaluate test when present. The upstream trainer only
+    # evaluates one `valid_dataloader`, so we must control what feeds it.
+    # eval_split_as_valid=False keeps YOLO val(173) -> COCO `valid` and YOLO
+    # test(1016) -> COCO `test` as separate dirs. The upstream
+    # COCOInstanceDataset(..., "valid") then loads 173 images, so the per-epoch
+    # eval runs on val, not test (~6x faster). The final eval swaps to a test
+    # dataloader (built below) so predictions.json is written from the 1016-image
+    # test set, which is what the post-hoc coco_eval_full scores for the paper's
+    # seg_mAP. eval_split_as_valid=True collapsed test into valid, making every
+    # per-epoch eval iterate the 1016-image test set; that was the bug, not a
+    # slow implementation.
     import yaml as _yaml
     with open(DATA_YAML) as _yf:
         _ycfg = _yaml.safe_load(_yf) or {}
     EVAL_SPLIT = "test" if "test" in _ycfg else ("valid" if "valid" in _ycfg else "val")
 
     print("🔄 Converting YOLO → COCO …")
-    COCO_DIR, CLASSES = yolo_to_coco_layout(DATA_YAML, DATA_NAME, eval_split_as_valid=True)
+    COCO_DIR, CLASSES = yolo_to_coco_layout(DATA_YAML, DATA_NAME, eval_split_as_valid=False)
     print(f"✅ COCO ready at {COCO_DIR} (classes: {CLASSES}; eval_split={EVAL_SPLIT})")
 
     REPO_DIR = ensure_repo()
@@ -587,7 +780,7 @@ if __name__ == "__main__":
     # Pre-flight sanity checks — printed once before training. These help
     # distinguish "training collapsed because backbone fell back to random
     # init" (HF gating) from "COCO category-id off-by-one" type failures
-    # without needing to wait for 150 epochs of zero-mAP runs.
+    # without needing to wait out a full run of zero-mAP epochs.
     _m2f_sanity_dump(COCO_DIR, MODEL_FILE, CLASSES)
 
     MODEL_STEM = Path(args.model).stem
@@ -656,12 +849,14 @@ def _load_upstream():
     sys.modules["_m2f_upstream"] = _m
     return _m
 
-if __name__ == "__main__":
-    _mod = _load_upstream()
-else:
-    # If we are in a worker, we might not need to patch again if we used fork,
-    # but for forkserver we must be careful.
-    _mod = None
+# Load and patch unconditionally (cvBench speed port): a spawned DataLoader
+# worker re-imports this launcher with __name__ != "__main__", and the old guard
+# left it with _mod=None, so `_m2f_upstream` was never registered and unpickling
+# the patched dataset died with `ModuleNotFoundError: _m2f_upstream`. Loading
+# here (idempotent — checks sys.modules first) lets workers resolve the patched
+# module, so dataloader_num_workers>0 is legal. This is the only reason that
+# count was pinned to 0 below.
+_mod = _load_upstream()
 
 if _mod:
     # ---- (a) Dataset: attach image_id + file_name -----------------------------
@@ -728,16 +923,154 @@ if _mod:
         _orig_eval = _mod.evaluation_loop
         _PRED_PATH = {_PRED_JSON!r}
         _FPS_PATH  = {_FPS_JSON!r}
+        # bench_any: per-epoch eval runs on val(173), final eval runs on test(1016).
+        # eval_split_as_valid=False (set above) keeps the two splits separate in the
+        # generated COCO dir, so the upstream trainer's valid_dataloader feeds on
+        # val(173) — the per-epoch eval is cheap. The upstream trainer has only one
+        # eval dataloader and calls evaluation_loop once per epoch (best-model
+        # selection + logging) plus once at the end; the upstream passes valid_dataloader
+        # to ALL of them, including the final one. But the final eval must write
+        # predictions.json from the 1016-image test set (the post-hoc coco_eval_full
+        # scores that file against the test GT for the paper's seg_mAP). So on the
+        # final call we swap the dataloader to a test-set dataloader built here from
+        # the upstream's own COCOInstanceDataset + collate_fn.
+        #
+        # Final-call detection: with --checkpointing_steps epoch the upstream trainer
+        # calls evaluation_loop exactly once per epoch (no mid-epoch step-checkpoint
+        # eval), so call N == epoch N and the final call is _call_n >= total_epochs.
+        # Resume is weight-reload-only for M2F (no optimizer state), so the counter
+        # restarts at 0 and the call counter is correct across resume.
+        #
+        # Env knobs:
+        #   BENCH_M2F_PEREPOCH_THRESH (default 0.3) score threshold for the per-epoch
+        #     val eval. Raising it 6x cuts the mask count (68k -> 11k on PW) and the
+        #     RLE post-process with it, at ~1 pt mAP50 cost (verified 0.6247 -> 0.6155).
+        #     The final test eval always uses 0.0.
+        #   BENCH_M2F_PEREPOCH_STRIDE (default 1) run per-epoch val eval every Nth
+        #     epoch instead of every epoch. 1 = every epoch (default, full curve).
+        #     5 = epochs 1,5,10,...,120 plus the final test eval — a real learning
+        #     curve at ~20% of the eval cost (~30 min vs ~2.5h per m2f cell on PW),
+        #     for re-runs where only the curve shape matters. Skipped epochs carry
+        #     forward the last sampled metrics (plateaus, not zeros), so the
+        #     history.csv curve stays continuous and the upstream best-epoch
+        #     tracker (strict >) never fires on a carry-forward. The final test
+        #     eval always runs regardless of stride.
+        #   BENCH_M2F_KEEP_INMEM_EVAL (unchanged) gate the in-memory MAP.
+        _BENCH_TOTAL_EPOCHS = {epochs!r}
+        _BENCH_PEREPOCH_THRESH = float(_os.environ.get("BENCH_M2F_PEREPOCH_THRESH", "0.3"))
+        _BENCH_PEREPOCH_STRIDE = max(1, int(_os.environ.get("BENCH_M2F_PEREPOCH_STRIDE", "1")))
+        _BENCH_COCO_DIR = {str(COCO_DIR)!r}
+        _BENCH_EVAL_BS = {bs!r}
+        _BENCH_DL_WORKERS = 0
+        _bench_eval_call_n = [0]
+        _bench_is_final_cached = [None]
+        _bench_test_dl = [None]
+        _last_sampled_metrics = [None]
+
+        # bench_any: the final test eval must score the SELECTED checkpoint, not
+        # whatever the last epoch happened to be. Upstream calls the eval hook
+        # from inside the training loop, so without this the reported number is
+        # the last epoch on the test split while yolo/rtdetr report their best.
+        # Loaded once, in place, on the final call only; the training loop is
+        # over by then, so mutating the live weights costs nothing.
+        _bench_best_loaded = [False]
+
+        def _bench_load_best_for_final_eval(model, accelerator):
+            if _bench_best_loaded[0]:
+                return
+            _bench_best_loaded[0] = True
+            _bd = _os.environ.get("BENCH_M2F_BEST_DIR", "")
+            _sft = _os.path.join(_bd, "model.safetensors") if _bd else ""
+            if not _sft or not _os.path.isfile(_sft):
+                print("[bench_any] M2F final eval: no best_model/model.safetensors "
+                      "found; scoring the LAST-epoch weights (report accordingly)")
+                return
+            try:
+                from safetensors.torch import load_file as _load_sft
+                _tgt = accelerator.unwrap_model(model)
+                _sd = _load_sft(_sft)
+                _cur = _tgt.state_dict()
+                _ok = {{_k: _v for _k, _v in _sd.items()
+                        if _k in _cur and tuple(_cur[_k].shape) == tuple(_v.shape)}}
+                # A PARTIAL swap is worse than either endpoint: the scored weights
+                # would be neither the selected checkpoint nor the last epoch, and
+                # the print below would still read as success. Refuse anything but
+                # a complete match and say which weights actually got scored.
+                if len(_ok) < len(_sd):
+                    print(f"[bench_any] M2F final eval: best-checkpoint keys do NOT "
+                          f"match the live model ({{len(_ok)}}/{{len(_sd)}} tensors "
+                          f"usable); scoring the LAST-epoch weights instead. The "
+                          f"reported number is NOT the selected checkpoint.")
+                    return
+                _res = _tgt.load_state_dict(_ok, strict=False)
+                print(f"[bench_any] M2F final eval: loaded the SELECTED checkpoint "
+                      f"from {{_sft}} ({{len(_ok)}}/{{len(_sd)}} tensors, "
+                      f"missing={{len(getattr(_res, 'missing_keys', []) or [])}})")
+            except Exception as _e_best:
+                print(f"[bench_any] M2F final eval: best-checkpoint load FAILED "
+                      f"({{_e_best}}); scoring the LAST-epoch weights")
 
         def _patched_eval(model, image_processor, accelerator, dataloader, id2label):
             from torchmetrics.detection.mean_ap import MeanAveragePrecision
             from tqdm import tqdm as _tqdm
+            from accelerate.utils import send_to_device as _send_to_device
+            _bench_eval_call_n[0] += 1
+            _call_n = _bench_eval_call_n[0]
+            _is_final = _call_n >= _BENCH_TOTAL_EPOCHS
+            if _is_final:
+                _bench_is_final_cached[0] = True
+            # Sampling: on a non-final epoch that is not on the stride, skip the
+            # full val eval and carry forward the last sampled metrics. This keeps
+            # the per-epoch JSON/history populated (plateau, not zero) and avoids
+            # the upstream best-epoch tracker firing on a carry-forward (strict >).
+            # The final test eval always runs regardless of stride.
+            _do_eval = _is_final or (_call_n % _BENCH_PEREPOCH_STRIDE == 0)
+            if not _do_eval and _last_sampled_metrics[0] is not None:
+                print(f"[bench_any] M2F per-epoch eval {{_call_n}}/{{_BENCH_TOTAL_EPOCHS}} skipped (stride={{_BENCH_PEREPOCH_STRIDE}}); carrying forward last sampled metrics")
+                return dict(_last_sampled_metrics[0])
+            # On the final call, swap the val dataloader for a test dataloader so
+            # predictions.json is written from the 1016-image test set. Built once
+            # (cached) from the upstream dataset class + collate_fn.
+            if _is_final and _bench_test_dl[0] is None:
+                try:
+                    import albumentations as _A
+                    _test_ds = _mod.COCOInstanceDataset(
+                        _BENCH_COCO_DIR, "test", image_processor,
+                        transform=_A.Compose([_A.NoOp()]), use_cache=True)
+                    _cf = getattr(_mod, "collate_fn", None)
+                    _kw = dict(shuffle=False, batch_size=_BENCH_EVAL_BS,
+                               num_workers=_BENCH_DL_WORKERS,
+                               pin_memory=True)
+                    if _cf is not None:
+                        _kw["collate_fn"] = _cf
+                    _bench_test_dl[0] = _mod.DataLoader(_test_ds, **_kw)
+                    print(f"[bench_any] M2F final eval: built test dataloader ({{len(_test_ds)}} imgs) for predictions.json")
+                except Exception as _e:
+                    print(f"[bench_any] M2F final eval: test dataloader build FAILED ({{_e}}); falling back to passed dataloader")
+            if _is_final and _bench_test_dl[0] is not None:
+                dataloader = _bench_test_dl[0]
+            if _is_final:
+                _bench_load_best_for_final_eval(model, accelerator)
+            _eval_thresh = 0.0 if _is_final else _BENCH_PEREPOCH_THRESH
+            if not _is_final:
+                print(f"[bench_any] M2F per-epoch eval {{_call_n}}/{{_BENCH_TOTAL_EPOCHS}} (val, thresh={{_eval_thresh}})")
+            else:
+                print(f"[bench_any] M2F FINAL test eval {{_call_n}} (test, thresh=0.0)")
             # Raise the per-image detection cap (default [1,10,100]) and silence
             # the ">100 detections" warning: crowded penguin scenes routinely
             # carry hundreds of instances that the default would truncate.
             metric = MeanAveragePrecision(iou_type="segm", class_metrics=True,
                                           max_detection_thresholds=[1, 10, 1000]).to(accelerator.device)
             all_rows = []
+            # bench_any: in-memory torchmetrics MAP accumulation is the eval
+            # OOM. post_process at threshold=0.0 with return_binary_maps=True
+            # makes ~100 full 640x640 bool masks per image on GPU, and
+            # metric.update holds them across all 254 val images (~10 GB)
+            # until compute() on a 16 GB card. The real per-epoch numbers come
+            # from coco_eval_full re-scoring all_rows below, not from
+            # metric.compute(), so this accumulation is dead work. Default
+            # off; set BENCH_M2F_KEEP_INMEM_EVAL=1 to restore it for debugging.
+            _keep_inmem = _os.environ.get("BENCH_M2F_KEEP_INMEM_EVAL", "0") == "1"
             _tot_ms = 0.0; _tot_imgs = 0
             _is_cuda = str(getattr(accelerator, "device", "")).startswith("cuda")
             for inputs in _tqdm(dataloader, total=len(dataloader),
@@ -746,6 +1079,15 @@ if _mod:
                 _bench_ids   = inputs.pop("_bench_image_ids",  None)
                 _bench_names = inputs.pop("_bench_file_names", None)
                 original_sizes = inputs.pop("original_sizes", None)
+
+                # The bench-built test dataloader is a plain torch DataLoader, not
+                # an accelerate-prepared one, so its batches stay on the CPU while
+                # the prepared model sits on the GPU. Under --inference_only
+                # (num_train_epochs=0) the FIRST evaluation_loop call is already the
+                # final one, and it crashed with "Input type (torch.FloatTensor) and
+                # weight type (torch.cuda.FloatTensor) should be the same". Placing
+                # the batch here is a no-op when it is already on the device.
+                inputs = _send_to_device(inputs, accelerator.device)
 
                 # Time forward + post-process. Sync GPU around the region so we
                 # don't undercount when CUDA work overlaps the Python loop.
@@ -762,7 +1104,7 @@ if _mod:
                     current_target_sizes = [m.shape[-2:] for m in inputs["mask_labels"]]
 
                 post = image_processor.post_process_instance_segmentation(
-                    outputs, threshold=0.0, target_sizes=current_target_sizes,
+                    outputs, threshold=_eval_thresh, target_sizes=current_target_sizes,
                     return_binary_maps=True,
                 )
                 # End the timed region: sync GPU then accumulate ms & image count.
@@ -802,9 +1144,17 @@ if _mod:
                             rle = _mu.encode(_np.asfortranarray(m))
                             if isinstance(rle.get("counts"), bytes):
                                 rle["counts"] = rle["counts"].decode("ascii")
-                            ys, xs = _np.where(m > 0)
-                            x1, x2 = int(xs.min()), int(xs.max())
-                            y1, y2 = int(ys.min()), int(ys.max())
+                            # bbox via np.where is the dominant per-epoch CPU
+                            # cost (one full-mask scan per instance). Only the
+                            # final test eval's coco_eval_full bbox path needs
+                            # it; per-epoch val eval is segm-only, so skip it.
+                            if _is_final:
+                                ys, xs = _np.where(m > 0)
+                                x1, x2 = int(xs.min()), int(xs.max())
+                                y1, y2 = int(ys.min()), int(ys.max())
+                                _bbox = [x1, y1, x2 - x1 + 1, y2 - y1 + 1]
+                            else:
+                                _bbox = [0, 0, 0, 0]
                             _row = {{
                                 "_file_name": file_name,
                                 # category_id stays whatever M2F predicted; it's
@@ -812,27 +1162,42 @@ if _mod:
                                 # (the upstream patch maps {{0:0, **inst→sem}}).
                                 "category_id": int(lbls[k]),
                                 "score": float(scrs[k]),
-                                "bbox": [x1, y1, x2 - x1 + 1, y2 - y1 + 1],
+                                "bbox": _bbox,
                                 "segmentation": rle,
                             }}
                             if img_id >= 0:
                                 _row["image_id"] = int(img_id)
                             all_rows.append(_row)
-                metric.update(post_preds, post_tgts)
+                if _keep_inmem:
+                    metric.update(post_preds, post_tgts)
+                # bench_any: free this batch's full-res binary maps now; the
+                # post-process loop above has already flattened them into
+                # all_rows, so keeping them lets ~640x640x100 bool tensors pile
+                # up across the epoch. Critical when inmem metric is off.
+                del post_preds, post_tgts, post
+                if _is_cuda:
+                    try: _t.cuda.empty_cache()
+                    except Exception: pass
 
             # Snapshot the predictions to disk (only on the main process to avoid
-            # multi-rank clobbering).
+            # multi-rank clobbering). The canonical predictions.json (threshold=0.0,
+            # full bbox) is written ONLY on the final test eval so a per-epoch call
+            # never overwrites it with a lower-quality (threshold=0.3, stub bbox)
+            # dump. Per-epoch calls snapshot to predictions_best.json whenever val
+            # mAP sets a new high, so a crash before the final eval still leaves a
+            # harvestable prediction set (see the best-tracking block below).
             try:
                 if accelerator.is_local_main_process:
-                    _tmp = _PRED_PATH + ".tmp"
-                    with open(_tmp, "w") as _fh:
-                        _json.dump(all_rows, _fh)
-                    _os.replace(_tmp, _PRED_PATH)
-                    print(f"[bench_any] M2F predictions.json: {{len(all_rows)}} rows -> {{_PRED_PATH}}")
-                    # Persist a rolling FPS estimate.
-                    _fps = (_tot_imgs * 1000.0 / _tot_ms) if _tot_ms > 0 else 0.0
-                    with open(_FPS_PATH, "w") as _ffh:
-                        _json.dump({{"fps_eval": float(_fps), "n_imgs": int(_tot_imgs)}}, _ffh)
+                    if _is_final:
+                        _tmp = _PRED_PATH + ".tmp"
+                        with open(_tmp, "w") as _fh:
+                            _json.dump(all_rows, _fh)
+                        _os.replace(_tmp, _PRED_PATH)
+                        print(f"[bench_any] M2F predictions.json: {{len(all_rows)}} rows -> {{_PRED_PATH}}")
+                        # Persist a rolling FPS estimate.
+                        _fps = (_tot_imgs * 1000.0 / _tot_ms) if _tot_ms > 0 else 0.0
+                        with open(_FPS_PATH, "w") as _ffh:
+                            _json.dump({{"fps_eval": float(_fps), "n_imgs": int(_tot_imgs)}}, _ffh)
             except Exception as _e_w:
                 print(f"[bench_any] M2F predictions dump write failed: {{_e_w}}")
 
@@ -901,9 +1266,49 @@ if _mod:
                 print(f"[bench_any] M2F real per-epoch eval failed ({{_e_rm}}); "
                       "falling back to in-memory torchmetrics")
 
+            # bench_any: snapshot predictions_best.json whenever a per-epoch val
+            # eval sets a new high mAP50. If the run dies before the final test
+            # eval, this file is the harvestable record of the best epoch's
+            # predictions (segm-only, threshold=0.3). The final test eval writes
+            # the canonical predictions.json separately above.
+            if not _is_final and _real_metrics is not None and accelerator.is_local_main_process:
+                try:
+                    _best_path = _PRED_PATH + ".best.json"
+                    _cur_best = -1.0
+                    if _os.path.isfile(_best_path):
+                        import json as _bj
+                        with open(_best_path) as _bfh:
+                            _cur_best = float(_bj.load(_bfh).get("_bench_best_map50", -1.0))
+                    if float(_real_metrics["map_50"]) > _cur_best:
+                        _tmp_b = _best_path + ".tmp"
+                        with open(_tmp_b, "w") as _bfh:
+                            _json.dump({{"_bench_best_map50": float(_real_metrics["map_50"]),
+                                         "predictions": all_rows}}, _bfh)
+                        _os.replace(_tmp_b, _best_path)
+                        print(f"[bench_any] M2F predictions_best.json updated: map50={{_real_metrics['map_50']:.4f}} (epoch call {{_call_n}})")
+                except Exception as _e_b:
+                    print(f"[bench_any] M2F predictions_best snapshot failed: {{_e_b}}")
+
             if _real_metrics is not None:
+                # Cache so a stride-skipped epoch can carry this forward instead
+                # of returning a zero/placeholder and breaking the history curve.
+                if not _is_final:
+                    _last_sampled_metrics[0] = dict(_real_metrics)
                 return _real_metrics
-            return metric.compute()
+            # bench_any: do NOT fall back to metric.compute() here. The in-memory
+            # MAP was never updated when _keep_inmem is off, so compute() would
+            # raise on an empty state; and when _keep_inmem is on, the bg-id-0
+            # patch corrupts it to near-zero (see the comment above). Either way
+            # it is the wrong number, and returning it silently would let a
+            # failing coco_eval_full look like a successful eval. Raise loudly
+            # instead, unless explicitly debugging with the inmem path on.
+            if _keep_inmem:
+                return metric.compute()
+            raise RuntimeError(
+                "bench_any M2F eval: coco_eval_full produced no trusted metrics "
+                "and the in-memory fallback is disabled (BENCH_M2F_KEEP_INMEM_EVAL "
+                "unset). Refusing to return a silent zero. Check the GT path "
+                "and bench_eval import in the patched evaluation_loop.")
 
         _mod.evaluation_loop = _patched_eval
         print(f"[bench_any] M2F prediction dump enabled -> {{_PRED_PATH}}")
@@ -922,14 +1327,11 @@ if __name__ == "__main__":
         else:
             runpy.run_path(_script, run_name='__main__')
 """)
-    # Clinical: the upstream module is dynamically loaded as `_m2f_upstream` so
-    # forkserver/spawn DataLoader workers cannot import its patched dataset class.
-    # Force single-process loading inside this launcher; otherwise training dies
-    # at step 0 with `ModuleNotFoundError: _m2f_upstream` before any valid eval.
-    dl_workers = 0
-    if int(args.threads or 0) > 0:
-        print(f"🩹 M2F dynamic launcher: forcing --dataloader_num_workers=0 "
-              f"(was {args.threads}) to avoid _m2f_upstream worker import failure")
+    # Clinical: the upstream module is now dynamically loaded at module level as
+    # `_m2f_upstream` (cvBench speed port), so forkserver/spawn DataLoader workers
+    # CAN import its patched dataset class. `--threads 0` means auto
+    # (min(8, cpu_count)); -1 forces single-process.
+    dl_workers = 0 if int(args.threads) < 0 else (int(args.threads or 0) or min(8, os.cpu_count() or 8))
 
     cmd = [sys.executable, str(LAUNCHER),
            str(REPO_DIR / "mask2former_dinov3_no_trainer_coco.py"),
@@ -960,7 +1362,7 @@ if __name__ == "__main__":
         _resume_ckpt = _state_dirs[-1] if _state_dirs else None
         if _resume_ckpt is not None and _resume_ckpt.is_dir():
             cmd += ["--resume_from_checkpoint", str(_resume_ckpt)]
-            print(f"⏯️  Resuming M2F from {_resume_ckpt.name}")
+            print(f"⏯  Resuming M2F from {_resume_ckpt.name}")
         else:
             # No resumable accelerate state. Fall back to a weights-only WARM-START
             # from the newest epoch_N/ (or best_model/) so a run that crashed before
@@ -978,7 +1380,7 @@ if __name__ == "__main__":
                     _warmstart_path = _cand_sft
                     break
             if _warmstart_path is not None:
-                print(f"⏯️  No resumable state; WARM-STARTING weights from "
+                print(f"⏯  No resumable state; WARM-STARTING weights from "
                       f"{_warmstart_path.parent.name}/model.safetensors "
                       "(optimizer state not recoverable; resumable checkpoints "
                       "written from now on).")
@@ -992,17 +1394,35 @@ if __name__ == "__main__":
                 _ws_stable = RUN_DIR / "_bench_warmstart.safetensors"
                 try:
                     shutil.copy2(_warmstart_path, _ws_stable)
-                    for _old_ep in RUN_DIR.glob("epoch_*"):
-                        if _old_ep.is_dir():
-                            shutil.rmtree(_old_ep, ignore_errors=True)
+                    # Epoch numbering restarts at 0 for a warm-started TRAINING run,
+                    # so stale epoch_*/ dirs have to go or the upstream pruner keeps
+                    # the wrong one. An --inference_only run trains nothing and writes
+                    # no epoch dirs, so clearing them there destroys trained weights
+                    # for no gain: it already cost the epoch-124 dump of the
+                    # corpus-diversity vith16plus run on 2026-08-22.
+                    if not args.inference_only:
+                        for _old_ep in RUN_DIR.glob("epoch_*"):
+                            if _old_ep.is_dir():
+                                shutil.rmtree(_old_ep, ignore_errors=True)
+                    # Same reason for the final dump: the child re-saves model.safetensors
+                    # from the warm-started weights, silently replacing the last-epoch
+                    # weights with the best-epoch ones. Park it under an explicit name
+                    # first — a rename costs no disk and keeps both checkpoints.
+                    _final_sft = RUN_DIR / "model.safetensors"
+                    if args.inference_only and _final_sft.is_file():
+                        _parked = RUN_DIR / "final_epoch_model.safetensors"
+                        if not _parked.exists():
+                            _final_sft.rename(_parked)
+                            print(f"🔒 --inference_only: parked the last-epoch weights at "
+                                  f"{_parked.name} so the eval pass cannot overwrite them.")
                     _warmstart_path = _ws_stable
-                    print(f"🧹 Cleared stale weights-only epoch_*/ dirs; warm-start "
-                          f"weights staged at {_ws_stable.name}.")
+                    print(f"🧹 {'Kept' if args.inference_only else 'Cleared'} weights-only "
+                          f"epoch_*/ dirs; warm-start weights staged at {_ws_stable.name}.")
                 except Exception as _e_ws_stage:
                     print(f"⚠️ warm-start staging failed ({_e_ws_stage}); loading "
                           "weights in place without clearing stale epoch dirs.")
             else:
-                print("⏯️  --resume requested but no checkpoint_epoch_* state dir and "
+                print("⏯  --resume requested but no checkpoint_epoch_* state dir and "
                       "no weights-only epoch_*/best_model dump found; starting fresh "
                       "(state checkpoints will be written from now on).")
 
@@ -1026,6 +1446,14 @@ if __name__ == "__main__":
     else:
         env.pop("BENCH_M2F_WARMSTART", None)
     env["BENCH_M2F_KEEP_EPOCHS"] = str(max(0, int(args.keep_epochs)))
+    # --patience was parsed and never forwarded, so upstream — which tracks the
+    # best epoch but never breaks — always spent the full budget. An eval-only
+    # pass has no loop to stop, so it stays off there.
+    env["BENCH_M2F_PATIENCE"] = "0" if args.inference_only else str(max(0, int(args.patience)))
+    # Where the child looks for the selected checkpoint to score in the final
+    # test eval. Upstream writes best_model/ as it trains, so the directory need
+    # not exist yet at launch.
+    env["BENCH_M2F_BEST_DIR"] = str(RUN_DIR / "best_model")
     env.setdefault("TRANSFORMERS_VERBOSITY", "error")
     env.setdefault("HF_HUB_VERBOSITY", "error")
     # Throttle tqdm. The upstream trainer + our eval loop pass `disable=` to tqdm
@@ -1076,18 +1504,21 @@ if __name__ == "__main__":
             try: _ws_stable_done.unlink()
             except Exception: pass
 
-    metrics = harvest_metrics(RUN_DIR)
+    metrics = harvest_metrics(RUN_DIR, EVAL_SPLIT)
 
     # ---- Derive box metrics from the segmentation predictions ----
     # M2F only computes segm mAP. We derive bbox mAP from the same predictions.
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import bench_eval as _be
-        # M2F trainer writes test predictions somewhere - find them
-        # Try best_model, then epoch dirs
+        # M2F trainer writes test predictions somewhere - find them.
+        # RUN_DIR/predictions.json is the canonical final-pass dump over the
+        # reported split; best_model/predictions.json is a best-epoch snapshot on
+        # the per-epoch (val) split. Prefer the canonical one — the old order let
+        # a stale val snapshot supply the derived box metrics.
         pred_json = None
-        for cand in [RUN_DIR / "best_model" / "predictions.json",
-                     RUN_DIR / "predictions.json"]:
+        for cand in [RUN_DIR / "predictions.json",
+                     RUN_DIR / "best_model" / "predictions.json"]:
             if cand.is_file():
                 pred_json = cand
                 break
@@ -1232,7 +1663,7 @@ if __name__ == "__main__":
             with open(fps_path) as fh:
                 fps_data = json.load(fh)
                 metrics["fps_eval"] = float(fps_data.get("fps_eval", 0.0))
-                print(f"   ⏱️  fps_eval = {metrics['fps_eval']:.2f}")
+                print(f"   ⏱  fps_eval = {metrics['fps_eval']:.2f}")
 
         n_params = 0
         snap = RUN_DIR / "best_model"

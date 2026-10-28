@@ -1,0 +1,27 @@
+{
+ "corpus": "boulders",
+ "chosen_config": {
+  "min_area": 64,
+  "nms_iou": 0.8,
+  "max_dim_frac": 1.0,
+  "score_floor": 0.25
+ },
+ "easy": 98.0,
+ "medium": 85.6,
+ "hard": 23.3,
+ "agg": 69.0,
+ "recall": 0.9441,
+ "target": {
+  "easy": 95.7,
+  "medium": 88.3,
+  "hard": 75.2,
+  "agg": 86.4
+ },
+ "deltas": {
+  "easy": 2.3,
+  "medium": -2.7,
+  "hard": -51.9
+ },
+ "agg_delta": -17.4,
+ "metric": "pycocotools COCOeval mask mAP@0.5 (single IoU 0.5, maxDet 100); per-tier via iscrowd ignore; aggregate=mean of 3 tiers"
+}

@@ -1,0 +1,16 @@
+{
+ "test_map": 0.3886216415371944,
+ "test_map_50": 0.6256033231972051,
+ "test_map_75": 0.3862577622306849,
+ "test_map_small": 0.1607875496440226,
+ "test_map_medium": 0.4962764283180734,
+ "test_map_large": 0.5529308599982553,
+ "test_mar_100": 0.5316867808026944,
+ "training_summary": {
+  "total_epochs": 0,
+  "best_epoch": -1,
+  "best_metric": -1.0,
+  "best_metric_name": "map_75",
+  "best_epoch_metrics": {}
+ }
+}
