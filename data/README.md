@@ -4,13 +4,13 @@ Dane Brown and Karen Bradshaw, Department of Computer Science, Rhodes University
 
 This archive holds the gold labels, model predictions and score files needed to re-score the numbers reported in the article and its Supplementary material (SI). It covers three datasets: Boulders Beach, iNaturalist and Penguin Watch.
 
-SANParks data are excluded because they are held under a South African National Parks permit. The 123 Boulders Beach photographs are included in `boulders/images/`, at full resolution, with file names matching `boulders/gold_labels/`. Penguin Watch and iNaturalist images are public at their sources and are not redistributed here.
+SANParks data are excluded because they are held under a South African National Parks permit. The 123 Boulders Beach photographs are included in `boulders/images/`, at full resolution, with file names matching `boulders/gold_labels/`. All 200 Penguin Watch frames are in `penguin_watch_200/images/`. 650 of the 856 iNaturalist test photographs are in `inaturalist/images/`, and `inaturalist/images_attribution.csv` gives each one's licence and photographer. The other 206 are not redistributed: 201 are all rights reserved, 2 are no longer on iNaturalist and 3 do not come from iNaturalist. `inaturalist/images_not_included.csv` lists them with their observation links.
 
 ## Licences
 
 - Boulders Beach photographs: CC BY 4.0.
-- iNaturalist subset: CC BY-NC.
-- Penguin Watch dot annotations: CC BY 4.0.
+- iNaturalist photographs: each photographer's own licence (CC0, CC BY, CC BY-SA, CC BY-NC, CC BY-NC-SA or CC BY-NC-ND), listed per file in `inaturalist/images_attribution.csv`. iNaturalist gold annotations: CC BY-NC.
+- Penguin Watch frames: CC0, from Jones et al. (2018), Dryad, https://doi.org/10.5061/dryad.vv36g. Penguin Watch dot annotations: CC BY 4.0.
 
 ## How to re-score
 
@@ -49,6 +49,7 @@ Pairings:
 
 ### penguin_watch_200/ (200 images from five sites, 3114 gold penguins)
 
+- `images/`: the 200 frames, JPEG, file names matching `gold_labels/`. CC0.
 - `gold_labels/`: 200 gold label files, YOLO segmentation text. Table 1, Table 4.
 - `gold_labels_coco.json`: the same gold in COCO JSON. Table 4.
 - `gold_manifest_pw_v2_200.json`: image list and sampling design (40 images per site, tiers ranked within site), JSON.
@@ -62,6 +63,9 @@ Pairings:
 
 ### inaturalist/ (856-image test split, 5695 gold penguins)
 
+- `images/`: 650 of the 856 test photographs, JPEG, file names matching the gold `file_name` field.
+- `images_attribution.csv`: licence, photographer and observation link for each included photograph.
+- `images_not_included.csv`: the other 206 test photographs, the reason each is left out, and the observation link where one exists.
 - `gold/inat_test_gt_coco.json`: gold for the test split, COCO JSON with polygons. Table 1, Table S3, Fig. S2.
 - `gold/inat_test_gt_rle.json`: the same gold with RLE masks and ids 1 to 856. Table S6 and the counting results.
 - `gold/inat_v1_50_tiers.json`: tiers of the 50-image v1 subset (394 instances), JSON. Table S7.

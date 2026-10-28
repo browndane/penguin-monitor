@@ -2,14 +2,6 @@
 
 Code and evaluation protocol for *Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks*, by Dane Brown and Karen Bradshaw, Department of Computer Science, Rhodes University. Submitted to Ecological Informatics.
 
-## Use of generative AI
-
-The authors wrote this code. Claude (Anthropic, Claude Code) refactored it, and every Python file carries a header line saying so. The authors reviewed the refactored code and take responsibility for it. Because of that header line, the line numbers in PATHS.md count it.
-
-## Paths and accounts
-
-Absolute paths in the code are written as `/home/user/...`, and PATHS.md lists each one. Edit them for your own machine. The Roboflow scripts name a placeholder workspace, `anonymous-workspace`, and need your own workspace and `ROBOFLOW_API_KEY`.
-
 ## What this is
 
 A geometric sieve and a citizen-science agreement filter that turn the raw masks of a
@@ -23,7 +15,7 @@ produces it.
 
 ## Data
 
-The `data/` folder holds the gold labels, model predictions, score files and the 123 Boulders Beach photographs. Its README maps each file to the table or figure it backs. SANParks data are held under permit and are not included.
+The `data/` folder holds the gold labels, model predictions and score files, with the images: all 123 Boulders Beach photographs, all 200 Penguin-Watch frames and 650 of the 856 iNaturalist test photographs. The other 206 iNaturalist photographs carry no open licence, and `data/inaturalist/images_not_included.csv` links each one. The data README maps each file to the table or figure it backs. SANParks data are held under permit and are not included.
 
 ## Layout
 
@@ -81,15 +73,6 @@ This is research code that ran on one machine. `PATHS.md` lists every absolute
 path still in the source, with file and line. The two a reader hits first are
 already environment variables: `SAM2_ROOT` for the SAM 2 checkout and
 `P5_PAPER_DIR` for the directory the figure scripts write into.
-
-## Data
-
-The gold annotations, model predictions and score files for Boulders,
-iNaturalist and Penguin-Watch are in the companion data archive submitted
-with the article, `penguin_monitor_data_for_review.zip`, which has its
-own README. Images, model weights and the SANParks data are not included.
-The corpus descriptors and counts are in `prep/` and
-`penguins/dataset_counts_audit.py`.
 
 ## Licence
 
