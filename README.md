@@ -2,6 +2,8 @@
 
 Code and evaluation protocol for *Penguin Segmentation and Counting at Colony Scale using a Geometric Sieve on Foundation-Model Masks*, by Dane Brown and Karen Bradshaw, Department of Computer Science, Rhodes University. Submitted to Ecological Informatics.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23725054.svg)](https://doi.org/10.5281/zenodo.23725054)
+
 ## About
 
 A geometric sieve and a citizen-science agreement filter that turn the raw masks of a
